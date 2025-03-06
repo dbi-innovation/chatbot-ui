@@ -717,8 +717,12 @@ export type Database = {
           chat_id: string
           content: string
           created_at: string
+          feedback: string | null
           id: string
           image_paths: string[]
+          incorrect_reason: string | null
+          is_content_correct: boolean | null
+          is_content_liked: boolean | null
           model: string
           role: string
           sequence_number: number
@@ -730,8 +734,12 @@ export type Database = {
           chat_id: string
           content: string
           created_at?: string
+          feedback?: string | null
           id?: string
           image_paths: string[]
+          incorrect_reason?: string | null
+          is_content_correct?: boolean | null
+          is_content_liked?: boolean | null
           model: string
           role: string
           sequence_number: number
@@ -743,8 +751,12 @@ export type Database = {
           chat_id?: string
           content?: string
           created_at?: string
+          feedback?: string | null
           id?: string
           image_paths?: string[]
+          incorrect_reason?: string | null
+          is_content_correct?: boolean | null
+          is_content_liked?: boolean | null
           model?: string
           role?: string
           sequence_number?: number
