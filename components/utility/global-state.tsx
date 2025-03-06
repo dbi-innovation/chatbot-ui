@@ -77,9 +77,10 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const [userInput, setUserInput] = useState<string>("")
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatSettings, setChatSettings] = useState<ChatSettings>({
-    model: "gpt-4-turbo-preview",
-    prompt: "You are a helpful AI assistant.",
-    temperature: 0.5,
+    model: "gemini-1.5-pro-002",
+    prompt:
+      "You are a friendly, helpful AI assistant with strong reasoning capabilities. Ground your responses in factual information whenever possible.",
+    temperature: 0,
     contextLength: 4000,
     includeProfileContext: true,
     includeWorkspaceInstructions: true,
