@@ -159,11 +159,11 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setChatSettings({
       model: (searchParams.get("model") ||
         workspace?.default_model ||
-        "gpt-4-1106-preview") as LLMID,
+        "gemini-1.5-pro-002") as LLMID,
       prompt:
         workspace?.default_prompt ||
-        "You are a friendly, helpful AI assistant.",
-      temperature: workspace?.default_temperature || 0.5,
+        "You are a friendly, helpful AI assistant with strong reasoning capabilities. Ground your responses in factual information whenever possible.",
+      temperature: workspace?.default_temperature || 0,
       contextLength: workspace?.default_context_length || 4096,
       includeProfileContext: workspace?.include_profile_context || true,
       includeWorkspaceInstructions:

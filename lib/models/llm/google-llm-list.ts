@@ -24,6 +24,16 @@ const GEMINI_1_5_PRO: LLM = {
   imageInput: true
 }
 
+// Gemini 1.5 Pro with Search grounding
+const GEMINI_1_5_PRO_SEARCH: LLM = {
+  modelId: "gemini-1.5-pro-002",
+  modelName: "Gemini 1.5 Pro (Search)",
+  provider: "google",
+  hostedId: "gemini-1.5-pro-002",
+  platformLink: GOOGLE_PLATORM_LINK,
+  imageInput: false
+}
+
 // Gemini Pro (UPDATED 12/22/23)
 const GEMINI_PRO: LLM = {
   modelId: "gemini-pro",
@@ -44,4 +54,10 @@ const GEMINI_PRO_VISION: LLM = {
   imageInput: true
 }
 
-export const GOOGLE_LLM_LIST: LLM[] = [GEMINI_PRO, GEMINI_PRO_VISION, GEMINI_1_5_PRO, GEMINI_1_5_FLASH]
+export const GOOGLE_LLM_LIST: LLM[] = [
+  GEMINI_PRO,
+  GEMINI_PRO_VISION,
+  GEMINI_1_5_PRO,
+  GEMINI_1_5_FLASH,
+  GEMINI_1_5_PRO_SEARCH
+]

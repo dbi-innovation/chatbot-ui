@@ -290,3 +290,24 @@ We are working on a guide for contributing.
 ## Contact
 
 Message Mckay on [Twitter/X](https://twitter.com/mckaywrigley)
+
+## Google Cloud Authentication
+
+The application supports authenticating with Google Cloud Platform using a service account key file. The file `gcp.json` in the root directory is used by default.
+
+To use Google Cloud services with the application:
+
+1. Make sure the `gcp.json` file is present in the root directory of the project
+2. Use the GCP-specific npm scripts to start the application:
+   ```bash
+   # For development with GCP authentication
+   npm run dev:gcp
+   
+   # For production with GCP authentication
+   npm run start:gcp
+   
+   # To start with Supabase and GCP authentication
+   npm run chat:gcp
+   ```
+
+These scripts will automatically set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to use the `gcp.json` file.
