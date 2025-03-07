@@ -308,7 +308,7 @@ export const Message: FC<MessageProps> = ({
           ) : (
             <MessageMarkdown content={message.content} />
           )}
-          {message.role === "assistant" && (
+          {message.role === "assistant" && !isGenerating && (
             <MessageFeedbackActions
               isHovering={isHovering}
               isLast={isLast}

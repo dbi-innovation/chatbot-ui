@@ -65,6 +65,7 @@ interface FeedbackTextareaProps {
   textareaRef: React.RefObject<HTMLTextAreaElement>
   enableSkip?: boolean
   onSkip?: () => void
+  placeholder?: string
 }
 
 const FeedbackTextarea: FC<FeedbackTextareaProps> = ({
@@ -74,7 +75,8 @@ const FeedbackTextarea: FC<FeedbackTextareaProps> = ({
   visible,
   textareaRef,
   enableSkip,
-  onSkip
+  onSkip,
+  placeholder
 }) => {
   if (!visible) return null
 
@@ -82,33 +84,35 @@ const FeedbackTextarea: FC<FeedbackTextareaProps> = ({
     <div className="border-input relative mt-3 flex min-h-[60px] w-full items-center justify-center rounded-xl border-2">
       <TextareaAutosize
         textareaRef={textareaRef}
-        className="text-md flex w-full resize-none rounded-md py-4 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        className="text-md flex w-full resize-none rounded-md py-4 text-white focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         onValueChange={onChange}
         value={value}
         minRows={1}
+        placeholder={placeholder}
       />
-      <div className="absolute bottom-[14px] right-12 cursor-pointer hover:opacity-50">
+      <div className="absolute bottom-[14px] right-16 cursor-pointer hover:opacity-50">
         {enableSkip && (
           <div
-            className={cn(
-              "bg-primary text-secondary rounded p-1 text-sm",
-              !value && "cursor-not-allowed opacity-50"
-            )}
+            className={cn("bg-primary text-secondary rounded p-1 text-sm")}
             onClick={onSkip}
           >
-            SKIP
+            Skip
           </div>
         )}
       </div>
       <div className="absolute bottom-[14px] right-3 cursor-pointer hover:opacity-50">
-        <IconSend
+        <div
           className={cn(
-            "bg-primary text-secondary rounded p-1",
+            "bg-primary text-secondary rounded p-1 text-sm",
             !value && "cursor-not-allowed opacity-50"
           )}
-          onClick={onSubmit}
-          size={28}
-        />
+          onClick={() => {
+            if (!value) return
+            onSubmit()
+          }}
+        >
+          Send
+        </div>
       </div>
     </div>
   )
@@ -224,7 +228,7 @@ export const MessageFeedbackActions: FC<MessageFeedbackActionsProps> = ({
 
   const renderFeedbackButtons = () => (
     <>
-      <div className="flex justify-end space-x-2">
+      <div className="mx-[2px] flex justify-end space-x-2">
         <p>ถูกต้องหรือไม่?</p>
         <FeedbackButton
           isActive={isCorrect === true}
@@ -251,13 +255,14 @@ export const MessageFeedbackActions: FC<MessageFeedbackActionsProps> = ({
         onSubmit={onSubmitInCorrectReason}
         visible={inCorrectReasonVisible}
         textareaRef={inCorrectReasonRef}
+        placeholder="ขอรายละเอียดเพิ่มเติมหน่อยค่ะ"
       />
     </>
   )
 
   const renderLikeButtons = () => (
     <>
-      <div className="flex justify-end space-x-2">
+      <div className="mx-[2px] flex justify-end space-x-2">
         <p>ถูกใจหรือเปล่า?</p>
         <FeedbackButton
           isActive={isLiked === true}
@@ -286,12 +291,13 @@ export const MessageFeedbackActions: FC<MessageFeedbackActionsProps> = ({
         textareaRef={feedbackRef}
         enableSkip={isLiked === true}
         onSkip={onSkipInCorrectReason}
+        placeholder="ขอรายละเอียดเพิ่มเติมหน่อยค่ะ"
       />
     </>
   )
 
   return (
-    (isHovering || isLast) && (
+    isLast && (
       <div className="text-muted-foreground flex-col space-y-2">
         {renderFeedbackButtons()}
         {renderLikeButtons()}
