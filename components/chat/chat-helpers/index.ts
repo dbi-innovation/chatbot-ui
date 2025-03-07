@@ -219,7 +219,7 @@ export const handleHostedChat = async (
   }
 
   const apiEndpoint =
-    provider === "custom" ? "/api/chat/custom" : `/api/chat/${provider}`
+    provider === "custom" ? "/api/chat/custom" : `/api/chat/virtualcoach`
 
   const requestBody = {
     chatSettings: payload.chatSettings,
