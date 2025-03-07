@@ -55,17 +55,13 @@ const GEMINI_PRO_VISION: LLM = {
 }
 
 export const GOOGLE_LLM_LIST: LLM[] = [
-  
-  
   GEMINI_PRO,
- 
- 
+
   GEMINI_PRO_VISION,
- 
- 
+
   GEMINI_1_5_PRO,
- 
-  GEMINI_1_5_FLASH
-,
+
+  GEMINI_1_5_FLASH,
+
   GEMINI_1_5_PRO_SEARCH
 ]

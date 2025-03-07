@@ -19,12 +19,15 @@ export const preferredRegion = ["sin1"]
 
 // Get the absolute path to the credentials file
 const getCredentialsPath = () => {
-  // Use the absolute path if starting with /
-  if (
-    process.env.GOOGLE_APPLICATION_CREDENTIALS &&
-    process.env.GOOGLE_APPLICATION_CREDENTIALS.startsWith("/")
-  ) {
-    return process.env.GOOGLE_APPLICATION_CREDENTIALS
+  // If GOOGLE_APPLICATION_CREDENTIALS is defined in .env, use it
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    // Use the absolute path if starting with /
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS.startsWith("/")) {
+      return process.env.GOOGLE_APPLICATION_CREDENTIALS
+    }
+
+    // If it's a relative path, resolve it from the current working directory
+    return path.join(process.cwd(), process.env.GOOGLE_APPLICATION_CREDENTIALS)
   }
 
   // Default to the gcp.json in the root directory

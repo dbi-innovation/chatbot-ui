@@ -204,7 +204,7 @@ Here you will get the values for the following environment variables:
 
 - `Project Ref`: Found in "General settings" as "Reference ID"
 
-- `Project ID`: Found in the URL of your project dashboard (Ex: https://supabase.com/dashboard/project/<YOUR_PROJECT_ID>/settings/general)
+- `Project ID`: Found in the URL of your project dashboard (Ex: <https://supabase.com/dashboard/project/><YOUR_PROJECT_ID>/settings/general)
 
 While still in "Settings" click on the "API" text tab on the left.
 
@@ -297,17 +297,4 @@ The application supports authenticating with Google Cloud Platform using a servi
 
 To use Google Cloud services with the application:
 
-1. Make sure the `gcp.json` file is present in the root directory of the project
-2. Use the GCP-specific npm scripts to start the application:
-   ```bash
-   # For development with GCP authentication
-   npm run dev:gcp
-   
-   # For production with GCP authentication
-   npm run start:gcp
-   
-   # To start with Supabase and GCP authentication
-   npm run chat:gcp
-   ```
-
-These scripts will automatically set the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to use the `gcp.json` file.
+1. Make sure the `gcp.json` file is present in the root directory of the project.
