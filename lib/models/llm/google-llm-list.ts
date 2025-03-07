@@ -4,6 +4,16 @@ const GOOGLE_PLATORM_LINK = "https://ai.google.dev/"
 
 // Google Models (UPDATED 12/22/23) -----------------------------
 
+// Gemini 2.0-pro-exp-02-05
+const GEMINI_2_0_PRO_EXP: LLM = {
+  modelId: "gemini-2.0-pro-exp-02-05",
+  modelName: "Virtual Coach",
+  provider: "google",
+  hostedId: "gemini-2.0-pro-exp-02-05",
+  platformLink: GOOGLE_PLATORM_LINK,
+  imageInput: true
+}
+
 // Gemini 1.5 Flash
 const GEMINI_1_5_FLASH: LLM = {
   modelId: "gemini-1.5-flash",
@@ -48,5 +58,6 @@ export const GOOGLE_LLM_LIST: LLM[] = [
   GEMINI_PRO,
   GEMINI_PRO_VISION,
   GEMINI_1_5_PRO,
-  GEMINI_1_5_FLASH
+  GEMINI_1_5_FLASH,
+  GEMINI_2_0_PRO_EXP
 ]

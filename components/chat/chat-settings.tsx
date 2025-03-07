@@ -31,6 +31,7 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
   }
 
   useEffect(() => {
+    console.log("chatSettings", chatSettings)
     if (!chatSettings) return
 
     setChatSettings({
@@ -62,8 +63,10 @@ export const ChatSettings: FC<ChatSettingsProps> = ({}) => {
     ...availableOpenRouterModels
   ]
 
-  const fullModel = allModels.find(llm => llm.modelId === chatSettings.model)
+  console.log("allModels", allModels)
 
+  const fullModel = allModels.find(llm => llm.modelId === chatSettings.model)
+  console.log("fullModel", fullModel)
   return (
     <Popover>
       <PopoverTrigger>

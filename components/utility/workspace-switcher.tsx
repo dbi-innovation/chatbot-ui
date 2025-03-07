@@ -47,6 +47,7 @@ export const WorkspaceSwitcher: FC<WorkspaceSwitcherProps> = ({}) => {
   const handleCreateWorkspace = async () => {
     if (!selectedWorkspace) return
 
+    console.log("createWorkspace", selectedWorkspace.default_model)
     const createdWorkspace = await createWorkspace({
       user_id: selectedWorkspace.user_id,
       default_context_length: selectedWorkspace.default_context_length,
