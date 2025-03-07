@@ -23,6 +23,7 @@ import { TextareaAutosize } from "../ui/textarea-autosize"
 import { WithTooltip } from "../ui/with-tooltip"
 import { MessageActions } from "./message-actions"
 import { MessageMarkdown } from "./message-markdown"
+import { MessageFeedbackActions } from "./message-feedback"
 
 const ICON_SIZE = 32
 
@@ -306,6 +307,13 @@ export const Message: FC<MessageProps> = ({
             />
           ) : (
             <MessageMarkdown content={message.content} />
+          )}
+          {message.role === "assistant" && (
+            <MessageFeedbackActions
+              isHovering={isHovering}
+              isLast={isLast}
+              message={message}
+            />
           )}
         </div>
 
