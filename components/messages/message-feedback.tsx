@@ -189,7 +189,7 @@ export const MessageFeedbackActions: FC<MessageFeedbackActionsProps> = ({
 
   const onLikedClick = () => {
     setIsLiked(true)
-    setFeedbackVisible(true)
+    setLikeAction(Action.SKIP)
     updateMessage(id, {
       is_content_liked: true
     })
@@ -201,11 +201,6 @@ export const MessageFeedbackActions: FC<MessageFeedbackActionsProps> = ({
     updateMessage(id, {
       is_content_liked: false
     })
-  }
-
-  const onSkipInCorrectReason = () => {
-    setLikeAction(Action.SKIP)
-    setFeedbackVisible(false)
   }
 
   useEffect(() => {
@@ -289,8 +284,6 @@ export const MessageFeedbackActions: FC<MessageFeedbackActionsProps> = ({
         onSubmit={onSubmitFeedback}
         visible={feedbackVisible}
         textareaRef={feedbackRef}
-        enableSkip={isLiked === true}
-        onSkip={onSkipInCorrectReason}
         placeholder="ขอรายละเอียดเพิ่มเติมหน่อยค่ะ"
       />
     </>

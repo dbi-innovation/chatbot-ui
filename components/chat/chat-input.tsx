@@ -234,32 +234,32 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
           </div>
         )}
       </div>
-      {!disableChatInput && (
-        <div className="border-input relative mt-3 flex min-h-[60px] w-full items-center justify-center rounded-xl border-2">
-          <div className="absolute bottom-[76px] left-0 max-h-[300px] w-full overflow-auto rounded-xl dark:border-none">
-            <ChatCommandInput />
-          </div>
+      <div className="border-input relative mt-3 flex min-h-[60px] w-full items-center justify-center rounded-xl border-2">
+        <div className="absolute bottom-[76px] left-0 max-h-[300px] w-full overflow-auto rounded-xl dark:border-none">
+          <ChatCommandInput />
+        </div>
 
-          <>
-            <IconCirclePlus
-              className="absolute bottom-[12px] left-3 cursor-pointer p-1 hover:opacity-50"
-              size={32}
-              onClick={() => fileInputRef.current?.click()}
-            />
-
-            {/* Hidden input to select files from device */}
-            <Input
-              ref={fileInputRef}
-              className="hidden"
-              type="file"
-              onChange={e => {
-                if (!e.target.files) return
-                handleSelectDeviceFile(e.target.files[0])
-              }}
-              accept={filesToAccept}
-            />
-          </>
-
+        <>
+          <IconCirclePlus
+            className="absolute bottom-[12px] left-3 p-1 text-gray-400 disabled:cursor-not-allowed"
+            size={32}
+            onClick={() => fileInputRef.current?.click()}
+            aria-disabled={disableChatInput}
+          />
+          {/* Hidden input to select files from device */}
+          <Input
+            ref={fileInputRef}
+            className="hidden"
+            type="file"
+            onChange={e => {
+              if (!e.target.files) return
+              handleSelectDeviceFile(e.target.files[0])
+            }}
+            accept={filesToAccept}
+            disabled={disableChatInput}
+          />
+        </>
+        {!disableChatInput ? (
           <TextareaAutosize
             textareaRef={chatInputRef}
             className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-md border-none bg-transparent px-14 py-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
@@ -276,31 +276,36 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
             onCompositionStart={() => setIsTyping(true)}
             onCompositionEnd={() => setIsTyping(false)}
           />
+        ) : (
+          <p className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-md border-none bg-transparent px-14 py-2 text-gray-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50">
+            {t(`Please provide feedback before continuing.`)}
+          </p>
+        )}
 
-          <div className="absolute bottom-[14px] right-3 cursor-pointer hover:opacity-50">
-            {isGenerating ? (
-              <IconPlayerStopFilled
-                className="hover:bg-background animate-pulse rounded bg-transparent p-1"
-                onClick={handleStopMessage}
-                size={30}
-              />
-            ) : (
-              <IconSend
-                className={cn(
-                  "bg-primary text-secondary rounded p-1",
-                  !userInput && "cursor-not-allowed opacity-50"
-                )}
-                onClick={() => {
-                  if (!userInput) return
+        <div className="absolute bottom-[14px] right-3 cursor-pointer hover:opacity-50">
+          {isGenerating ? (
+            <IconPlayerStopFilled
+              className="hover:bg-background animate-pulse rounded bg-transparent p-1"
+              onClick={handleStopMessage}
+              size={30}
+            />
+          ) : (
+            <IconSend
+              className={cn(
+                "bg-primary text-secondary rounded p-1",
+                (!userInput || disableChatInput) &&
+                  "cursor-not-allowed opacity-50"
+              )}
+              onClick={() => {
+                if (!userInput || disableChatInput) return
 
-                  handleSendMessage(userInput, chatMessages, false)
-                }}
-                size={30}
-              />
-            )}
-          </div>
+                handleSendMessage(userInput, chatMessages, false)
+              }}
+              size={30}
+            />
+          )}
         </div>
-      )}
+      </div>
     </>
   )
 }
