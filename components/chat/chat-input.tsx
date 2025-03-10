@@ -234,38 +234,18 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
           </div>
         )}
       </div>
-      <div className="border-input relative mt-3 flex min-h-[60px] w-full items-center justify-center rounded-xl border-2">
+      <div className="border-input bg-secondary relative mt-3 flex min-h-[60px] w-full items-center justify-center rounded-xl border-2">
         <div className="absolute bottom-[76px] left-0 max-h-[300px] w-full overflow-auto rounded-xl dark:border-none">
           <ChatCommandInput />
         </div>
 
-        <>
-          <IconCirclePlus
-            className="absolute bottom-[12px] left-3 p-1 text-gray-400 disabled:cursor-not-allowed"
-            size={32}
-            onClick={() => fileInputRef.current?.click()}
-            aria-disabled={disableChatInput}
-          />
-          {/* Hidden input to select files from device */}
-          <Input
-            ref={fileInputRef}
-            className="hidden"
-            type="file"
-            onChange={e => {
-              if (!e.target.files) return
-              handleSelectDeviceFile(e.target.files[0])
-            }}
-            accept={filesToAccept}
-            disabled={disableChatInput}
-          />
-        </>
         {!disableChatInput ? (
           <TextareaAutosize
             textareaRef={chatInputRef}
-            className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-md border-none bg-transparent px-14 py-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-md border-none bg-transparent py-2 pl-4 pr-14 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             placeholder={t(
               // `Ask anything. Type "@" for assistants, "/" for prompts, "#" for files, and "!" for tools.`
-              `Ask anything. Type @  /  #  !`
+              `Ask anything. Type /`
             )}
             onValueChange={handleInputChange}
             value={userInput}
@@ -277,8 +257,8 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
             onCompositionEnd={() => setIsTyping(false)}
           />
         ) : (
-          <p className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-md border-none bg-transparent px-14 py-2 text-gray-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50">
-            {t(`Please provide feedback before continuing.`)}
+          <p className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full cursor-not-allowed resize-none rounded-md border-none bg-transparent py-2 pl-4 pr-14 text-gray-400 opacity-50 focus-visible:outline-none">
+            กรุณาให้ feedback ก่อนถามคำถามถัดไป
           </p>
         )}
 
