@@ -116,7 +116,11 @@ export async function buildFinalMessages(
     role: "system",
     sequence_number: processedChatMessages.length,
     updated_at: "",
-    user_id: ""
+    user_id: "",
+    feedback: "",
+    incorrect_reason: "",
+    is_content_correct: null,
+    is_content_liked: null
   }
 
   finalMessages.unshift(tempSystemMessage)
