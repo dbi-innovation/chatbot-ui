@@ -13,6 +13,7 @@ import { useContext, useEffect, useRef } from "react"
 import { LLM_LIST } from "../../../lib/models/llm/llm-list"
 import {
   createTempMessages,
+  ErrorLog,
   handleCreateChat,
   handleCreateMessages,
   handleHostedChat,
@@ -274,7 +275,7 @@ export const useChatHandler = () => {
         chatFileItems: chatFileItems
       }
 
-      let generatedText = ""
+      let generatedText: string | ErrorLog = ""
 
       if (selectedTools.length > 0) {
         setToolInUse("Tools")
