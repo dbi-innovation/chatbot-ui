@@ -717,6 +717,7 @@ export type Database = {
           chat_id: string
           content: string
           created_at: string
+          error_log: string | null
           feedback: string | null
           id: string
           image_paths: string[]
@@ -734,6 +735,7 @@ export type Database = {
           chat_id: string
           content: string
           created_at?: string
+          error_log?: string | null
           feedback?: string | null
           id?: string
           image_paths: string[]
@@ -751,6 +753,7 @@ export type Database = {
           chat_id?: string
           content?: string
           created_at?: string
+          error_log?: string | null
           feedback?: string | null
           id?: string
           image_paths?: string[]

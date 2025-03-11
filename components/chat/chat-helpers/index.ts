@@ -23,6 +23,18 @@ import React from "react"
 import { toast } from "sonner"
 import { v4 as uuidv4 } from "uuid"
 
+export type ErrorLog = {
+  status: number
+  error: string
+}
+
+export const isErrorLog = (response: any): response is ErrorLog => {
+  return (
+    (response as ErrorLog).status !== undefined &&
+    (response as ErrorLog).error !== undefined
+  )
+}
+
 export const validateChatSettings = (
   chatSettings: ChatSettings | null,
   modelData: LLM | undefined,
@@ -104,7 +116,8 @@ export const createTempMessages = (
       feedback: "",
       incorrect_reason: "",
       is_content_correct: null,
-      is_content_liked: null
+      is_content_liked: null,
+      error_log: null
     },
     fileItems: []
   }
@@ -125,7 +138,8 @@ export const createTempMessages = (
       feedback: "",
       incorrect_reason: "",
       is_content_correct: null,
-      is_content_liked: null
+      is_content_liked: null,
+      error_log: null
     },
     fileItems: []
   }
@@ -181,6 +195,10 @@ export const handleLocalChat = async (
     setIsGenerating,
     setChatMessages
   )
+
+  if (isErrorLog(response)) {
+    return response
+  }
 
   return await processResponse(
     response,
@@ -244,6 +262,10 @@ export const handleHostedChat = async (
     setChatMessages
   )
 
+  if (isErrorLog(response)) {
+    return response
+  }
+
   return await processResponse(
     response,
     isRegeneration
@@ -280,10 +302,13 @@ export const fetchChatResponse = async (
 
     const errorData = await response.json()
 
-    toast.error(errorData.message)
+    toast.error(
+      "ไม่สามารถดำเนินการตามคำขอ เนื่องจากเกิดข้อผิดพลาดชั่วคราว กรุณารอสักครู่และลองใหม่อีกครั้งค่ะ"
+    )
 
     setIsGenerating(false)
     setChatMessages(prevMessages => prevMessages.slice(0, -2))
+    return { error: errorData.message, status: response.status } as ErrorLog
   }
 
   return response
@@ -401,7 +426,7 @@ export const handleCreateMessages = async (
   profile: Tables<"profiles">,
   modelData: LLM,
   messageContent: string,
-  generatedText: string,
+  generatedText: string | ErrorLog,
   newMessageImages: MessageImage[],
   isRegeneration: boolean,
   retrievedFileItems: Tables<"file_items">[],
@@ -427,10 +452,11 @@ export const handleCreateMessages = async (
     chat_id: currentChat.id,
     assistant_id: selectedAssistant?.id || null,
     user_id: profile.user_id,
-    content: generatedText,
+    content: isErrorLog(generatedText) ? "" : generatedText,
     model: modelData.modelId,
     role: "assistant",
     sequence_number: chatMessages.length + 1,
+    error_log: isErrorLog(generatedText) ? generatedText.error : null,
     image_paths: []
   }
 
@@ -441,7 +467,7 @@ export const handleCreateMessages = async (
 
     const updatedMessage = await updateMessage(lastStartingMessage.id, {
       ...lastStartingMessage,
-      content: generatedText
+      content: isErrorLog(generatedText) ? "" : generatedText
     })
 
     chatMessages[chatMessages.length - 1].message = updatedMessage
