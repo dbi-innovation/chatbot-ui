@@ -204,6 +204,11 @@ export const MessageFeedbackActions: FC<MessageFeedbackActionsProps> = ({
   }
 
   useEffect(() => {
+    if (message.error_log) {
+      setDisableChatInput(false)
+      return
+    }
+
     const userFeedback = new UserFeedback()
     userFeedback.giveCorrectFeedback(isCorrect, correctAction)
     userFeedback.giveLikeFeedback(isLiked, likeAction)
@@ -218,7 +223,8 @@ export const MessageFeedbackActions: FC<MessageFeedbackActionsProps> = ({
     inCorrectReasonVisible,
     setDisableChatInput,
     correctAction,
-    likeAction
+    likeAction,
+    message.error_log
   ])
 
   const renderFeedbackButtons = () => (
