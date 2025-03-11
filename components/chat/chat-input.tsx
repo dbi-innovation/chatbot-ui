@@ -85,7 +85,7 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
 
   useEffect(() => {
     const disableInputPrompt = chatMessages
-      .filter(({ message }) => message.role === "assistant")
+      .filter(({ message }) => message.role === "assistant" && !message.error_log)
       .some(({ message }) => {
         const {
           is_content_correct,
