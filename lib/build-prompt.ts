@@ -120,7 +120,8 @@ export async function buildFinalMessages(
     feedback: "",
     incorrect_reason: "",
     is_content_correct: null,
-    is_content_liked: null
+    is_content_liked: null,
+    error_log: null
   }
 
   finalMessages.unshift(tempSystemMessage)
