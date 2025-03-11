@@ -217,7 +217,7 @@ export const handleHostedChat = async (
   let draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
   let formattedMessages: any[] = []
-  if (provider === "google") {
+  if (provider === "google" || provider === "vertex") {
     formattedMessages = await adaptMessagesForGoogleGemini(
       payload,
       draftMessages
