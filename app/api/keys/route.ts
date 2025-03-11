@@ -13,6 +13,7 @@ export async function GET() {
     groq: VALID_ENV_KEYS.GROQ_API_KEY,
     perplexity: VALID_ENV_KEYS.PERPLEXITY_API_KEY,
     openrouter: VALID_ENV_KEYS.OPENROUTER_API_KEY,
+    vertex: VALID_ENV_KEYS.VERTEX_AI_PROJECT_ID,
 
     openai_organization_id: VALID_ENV_KEYS.OPENAI_ORGANIZATION_ID,
 
@@ -20,7 +21,10 @@ export async function GET() {
     azure_gpt_35_turbo_name: VALID_ENV_KEYS.AZURE_GPT_35_TURBO_NAME,
     azure_gpt_45_vision_name: VALID_ENV_KEYS.AZURE_GPT_45_VISION_NAME,
     azure_gpt_45_turbo_name: VALID_ENV_KEYS.AZURE_GPT_45_TURBO_NAME,
-    azure_embeddings_name: VALID_ENV_KEYS.AZURE_EMBEDDINGS_NAME
+    azure_embeddings_name: VALID_ENV_KEYS.AZURE_EMBEDDINGS_NAME,
+
+    vertex_ai_credentials_path: VALID_ENV_KEYS.VERTEX_AI_CREDENTIALS_PATH,
+    vertex_ai_location: VALID_ENV_KEYS.VERTEX_AI_LOCATION
   }
 
   const isUsingEnvKeyMap = Object.keys(envKeyMap).reduce<
