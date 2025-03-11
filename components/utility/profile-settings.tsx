@@ -172,7 +172,8 @@ export const ProfileSettings: FC<ProfileSettingsProps> = ({}) => {
       "mistral",
       "groq",
       "perplexity",
-      "openrouter"
+      "openrouter",
+      "vertex"
     ]
 
     providers.forEach(async provider => {

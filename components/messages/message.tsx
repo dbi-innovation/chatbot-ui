@@ -60,7 +60,8 @@ export const Message: FC<MessageProps> = ({
     assistantImages,
     toolInUse,
     files,
-    models
+    models,
+    chatSettings
   } = useContext(ChatbotUIContext)
 
   const { handleSendMessage } = useChatHandler()
@@ -139,7 +140,11 @@ export const Message: FC<MessageProps> = ({
     ...LLM_LIST,
     ...availableLocalModels,
     ...availableOpenRouterModels
-  ].find(llm => llm.modelId === message.model) as LLM
+  ].find(
+    llm =>
+      llm.modelId === message.model &&
+      chatSettings?.embeddingsProvider === llm.provider
+  ) as LLM
 
   const messageAssistantImage = assistantImages.find(
     image => image.assistantId === message.assistant_id
