@@ -247,7 +247,7 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
             className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-md border-none bg-transparent py-2 pl-4 pr-14 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             placeholder={t(
               // `Ask anything. Type "@" for assistants, "/" for prompts, "#" for files, and "!" for tools.`
-              `Ask anything. Type /`
+              `Ask anything. Type '/' to access your saved prompts.`
             )}
             onValueChange={handleInputChange}
             value={userInput}
