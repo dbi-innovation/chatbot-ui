@@ -10,6 +10,7 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   DOCKER_IMAGE: ${{ vars.DOCKER_REGISTRY }}/chat
   DOCKER_REGISTRY: ${{ vars.DOCKER_REGISTRY }}
+  NEXT_PUBLIC_AGENT_NAME: ${{ vars.NEXT_PUBLIC_AGENT_NAME }}
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
   NEXT_PUBLIC_USER_FILE_SIZE_LIMIT: ${{ vars.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT }}
@@ -46,6 +47,7 @@ jobs:
         load: true
         tags: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-uat
         build-args: |
+          NEXT_PUBLIC_AGENT_NAME=${{ env.NEXT_PUBLIC_AGENT_NAME }}
           NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_USER_FILE_SIZE_LIMIT=${{ env.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT }}
@@ -78,6 +80,7 @@ jobs:
         push: true
         tags: ${{ env.DOCKER_IMAGE }}:${{ github.ref_name }}-uat
         build-args: |
+          NEXT_PUBLIC_AGENT_NAME=${{ env.NEXT_PUBLIC_AGENT_NAME }}
           NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_USER_FILE_SIZE_LIMIT=${{ env.NEXT_PUBLIC_USER_FILE_SIZE_LIMIT }}
