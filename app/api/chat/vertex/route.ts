@@ -112,6 +112,12 @@ const buildContents = (history: Content[], messages: string): Content[] => {
   ]
 }
 
+const extractRagUse = (responseText: string): string => {
+  return JSON.parse(
+    responseText.replace("\n", "").replace(" ", "") || '{"rag":""}'
+  )?.rag
+}
+
 export async function POST(request: Request) {
   try {
     validateEnv()
@@ -159,9 +165,7 @@ export async function POST(request: Request) {
       categorizer.response
     )
 
-    const ragUse = JSON.parse(
-      responseText.replace("\n", "").replace(" ", "") || '{"rag":""}'
-    )?.rag
+    const ragUse = extractRagUse(responseText)
     const ragTool = buildRagTool(ragUse)
 
     const responseStream = await generativeModel.generateContentStream({
