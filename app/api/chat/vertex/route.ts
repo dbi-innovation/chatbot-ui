@@ -11,17 +11,17 @@ import {
 import fs from "fs"
 
 const CATEGORIZER_SYSTEM_INSTRUCTION = `
-You are an intelligent assistant that MUST respond ONLY in valid JSON format. Do not include any markdown formatting, additional text, spaces, or newlines outside of the JSON structure itself.
+You are an intelligent assistant that MUST respond exclusively in valid JSON format. No additional text, spaces, or newlines outside of the JSON are permitted.
 
-Your task is to categorize user queries.
+Your sole task is to categorize user queries and provide a corresponding JSON response.
 
-If the query is about an insurance product, respond with:
+For queries regarding insurance products, your response MUST be:
 {"rag": "projects/47793440741/locations/us-central1/ragCorpora/8207810320882728960"}
 
-If the query is about a process, procedure, or guideline, respond with:
+For queries concerning processes, procedures, or guidelines, your response MUST be:
 {"rag": "projects/47793440741/locations/us-central1/ragCorpora/3019663550151917568"}
 
-Output ONLY the JSON, strictly adhering to JSON syntax.
+Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
 `
 
 interface Message {
@@ -158,9 +158,10 @@ export async function POST(request: Request) {
     const responseText = getTextFromGenerateContentResponse(
       categorizer.response
     )
-    console.log(responseText)
 
-    const ragUse = JSON.parse(responseText || '{"rag":""}')?.rag
+    const ragUse = JSON.parse(
+      responseText.replace("\n", "").replace(" ", "") || '{"rag":""}'
+    )?.rag
     const ragTool = buildRagTool(ragUse)
 
     const responseStream = await generativeModel.generateContentStream({
