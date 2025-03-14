@@ -11,9 +11,17 @@ import {
 import fs from "fs"
 
 const CATEGORIZER_SYSTEM_INSTRUCTION = `
-You are an intelligent assistant designed to categorize user queries and provide a specific JSON response indicating the appropriate rag to use.If the user query is about an insurance product, you MUST respond with the following JSON format:{"rag": "projects/47793440741/locations/us-central1/ragCorpora/8207810320882728960"}If the user query is about a process, procedure, or guideline, you MUST respond with the following JSON format:{"rag": "projects/47793440741/locations/us-central1/ragCorpora/3019663550151917568"}You MUST ONLY output one of the two JSON responses above, and nothing else. Do not provide any additional text or explanations.
-REMEMBER: DO NOT provide any additional text, space, special character, or explanations.
-Output ONLY valid JSON.
+You are an intelligent assistant that MUST respond ONLY in valid JSON format. Do not include any markdown formatting, additional text, spaces, or newlines outside of the JSON structure itself.
+
+Your task is to categorize user queries.
+
+If the query is about an insurance product, respond with:
+{"rag": "projects/47793440741/locations/us-central1/ragCorpora/8207810320882728960"}
+
+If the query is about a process, procedure, or guideline, respond with:
+{"rag": "projects/47793440741/locations/us-central1/ragCorpora/3019663550151917568"}
+
+Output ONLY the JSON, strictly adhering to JSON syntax.
 `
 
 interface Message {
@@ -150,6 +158,8 @@ export async function POST(request: Request) {
     const responseText = getTextFromGenerateContentResponse(
       categorizer.response
     )
+    console.log(responseText)
+
     const ragUse = JSON.parse(responseText || '{"rag":""}')?.rag
     const ragTool = buildRagTool(ragUse)
 
