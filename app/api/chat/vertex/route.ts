@@ -164,7 +164,6 @@ export async function POST(request: Request) {
     const responseText = getTextFromGenerateContentResponse(
       categorizer.response
     )
-
     const ragUse = extractRagUse(responseText)
     const ragTool = buildRagTool(ragUse)
 
