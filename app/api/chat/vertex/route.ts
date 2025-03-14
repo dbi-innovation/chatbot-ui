@@ -113,9 +113,15 @@ const buildContents = (history: Content[], messages: string): Content[] => {
 }
 
 const extractRagUse = (responseText: string): string => {
-  return JSON.parse(
-    responseText.replace("\n", "").replace(" ", "") || '{"rag":""}'
-  )?.rag
+  try {
+    const jsonMatch = responseText.match(/{.*}/)
+    if (!jsonMatch) return ""
+
+    const parsed = JSON.parse(jsonMatch[0])
+    return parsed?.rag || ""
+  } catch (error) {
+    throw new Error(`Failed to extract RAG from response: ${error}`)
+  }
 }
 
 export async function POST(request: Request) {
