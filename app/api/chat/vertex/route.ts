@@ -1,12 +1,28 @@
 import { getServerProfile } from "@/lib/server/server-chat-helpers"
 import { ChatSettings } from "@/types"
 import {
+  Content,
+  GenerateContentResponse,
   GenerativeModel,
   HarmBlockThreshold,
   HarmCategory,
   VertexAI
 } from "@google-cloud/vertexai"
 import fs from "fs"
+
+const CATEGORIZER_SYSTEM_INSTRUCTION = `
+You are an intelligent assistant that MUST respond exclusively in valid JSON format. No additional text, spaces, or newlines outside of the JSON are permitted.
+
+Your sole task is to categorize user queries and provide a corresponding JSON response.
+
+For queries regarding insurance products, your response MUST be:
+{"rag": "projects/47793440741/locations/us-central1/ragCorpora/8207810320882728960"}
+
+For queries concerning processes, procedures, or guidelines, your response MUST be:
+{"rag": "projects/47793440741/locations/us-central1/ragCorpora/3019663550151917568"}
+
+Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
+`
 
 interface Message {
   role: string
@@ -47,27 +63,65 @@ const initializeVertexAI = (): VertexAI => {
   })
 }
 
-const buildRetrievalTools = (): any[] => {
-  const datastoresString = process.env.VERTEX_AI_DATASTORES!
-  const dataStoreIds = datastoresString.split(",").map(id => id.trim())
-  if (dataStoreIds.length === 0) {
-    throw new Error(
-      "VERTEX_AI_DATASTORES environment variable is empty or invalid"
-    )
-  }
-  return dataStoreIds.map(datastore => ({
-    retrieval: {
-      vertexAiSearch: { datastore },
-      disableAttribution: false
-    }
-  }))
-}
-
 const transformMessages = (messages: Message[]): any[] => {
   return messages.map(msg => ({
     role: msg.role,
     parts: [{ text: msg.parts[0].text }]
   }))
+}
+
+const buildRagTool = (rag?: string): any => {
+  if (!rag) throw new Error("No RAG provided")
+
+  const datastoresString = process.env.VERTEX_AI_DATASTORES!
+  const dataStoreIds = datastoresString
+    .split(",")
+    .map(id => id.trim())
+    .find(id => id === rag)
+  if (!dataStoreIds) {
+    throw new Error(
+      "VERTEX_AI_DATASTORES environment variable is empty or invalid"
+    )
+  }
+
+  return {
+    retrieval: {
+      vertexRagStore: {
+        ragResources: [{ ragCorpus: dataStoreIds }],
+        similarityTopK: 10,
+        vectorDistanceThreshold: 0.5
+      },
+      disableAttribution: false
+    }
+  }
+}
+
+const getTextFromGenerateContentResponse = (
+  response: GenerateContentResponse
+): string => {
+  return response?.candidates?.[0]?.content?.parts?.[0]?.text || ""
+}
+
+const buildContents = (history: Content[], messages: string): Content[] => {
+  return [
+    ...history,
+    {
+      role: "user",
+      parts: [{ text: messages }]
+    }
+  ]
+}
+
+const extractRagUse = (responseText: string): string => {
+  try {
+    const jsonMatch = responseText.match(/{.*}/)
+    if (!jsonMatch) return ""
+
+    const parsed = JSON.parse(jsonMatch[0])
+    return parsed?.rag || ""
+  } catch (error) {
+    throw new Error(`Failed to extract RAG from response: ${error}`)
+  }
 }
 
 export async function POST(request: Request) {
@@ -96,8 +150,7 @@ export async function POST(request: Request) {
       generationConfig: {
         maxOutputTokens: chatSettings.contextLength,
         temperature: chatSettings.temperature ?? 0
-      },
-      systemInstruction: chatSettings.prompt
+      }
     })
 
     const lastMessage = messages.pop()
@@ -106,33 +159,39 @@ export async function POST(request: Request) {
         "Failed to retrieve the last message from the messages array"
       )
     }
-    const formattedPreviousMessages = transformMessages(messages)
 
-    const tools = buildRetrievalTools()
-
-    const response = await generativeModel.generateContentStream({
-      contents: [
-        ...formattedPreviousMessages,
-        { role: "user", parts: [{ text: lastMessage.parts[0].text }] }
-      ],
-      tools: tools
+    const history = transformMessages(messages)
+    const contents = buildContents(history, lastMessage.parts[0].text)
+    const categorizer = await generativeModel.generateContent({
+      systemInstruction: CATEGORIZER_SYSTEM_INSTRUCTION,
+      contents: contents
     })
 
-    // Stream the response back to the client
+    const responseText = getTextFromGenerateContentResponse(
+      categorizer.response
+    )
+    const ragUse = extractRagUse(responseText)
+    const ragTool = buildRagTool(ragUse)
+
+    const responseStream = await generativeModel.generateContentStream({
+      systemInstruction: chatSettings.prompt,
+      contents: contents,
+      tools: [ragTool]
+    })
+
     const encoder = new TextEncoder()
     const readableStream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of response.stream) {
-            const textChunk =
-              chunk.candidates?.[0]?.content?.parts[0]?.text || ""
-            if (textChunk) {
-              controller.enqueue(encoder.encode(textChunk))
-            }
+          for await (const chunk of responseStream.stream) {
+            const textChunk = getTextFromGenerateContentResponse(chunk)
+            if (!textChunk) continue
+            controller.enqueue(encoder.encode(textChunk))
           }
-          controller.close()
         } catch (error) {
           controller.error(error)
+        } finally {
+          controller.close()
         }
       }
     })
