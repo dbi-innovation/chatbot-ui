@@ -185,8 +185,6 @@ export async function POST(request: Request) {
         try {
           for await (const chunk of responseStream.stream) {
             const textChunk = getTextFromGenerateContentResponse(chunk)
-            console.log(textChunk)
-
             if (!textChunk) continue
             controller.enqueue(encoder.encode(textChunk))
           }
@@ -202,8 +200,6 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "text/plain" }
     })
   } catch (error: any) {
-    console.log("error", error)
-
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
 
