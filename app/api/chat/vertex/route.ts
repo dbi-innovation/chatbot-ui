@@ -22,7 +22,8 @@ interface RequestBody {
 
 const validateEnv = () => {
   const requiredEnvVars = [
-    "VERTEX_AI_DATASTORES",
+    "VERTEX_AI_DATASTORE_PRODUCTS",
+    "VERTEX_AI_DATASTORE_PROCEDURE",
     "VERTEX_AI_CREDENTIALS_PATH",
     "VERTEX_AI_PROJECT_ID",
     "VERTEX_AI_LOCATION"
@@ -56,26 +57,11 @@ const transformMessages = (messages: Message[]): any[] => {
   }))
 }
 
-const buildRagTool = (rag?: string): any => {
-  if (!rag) throw new Error("No RAG provided")
-
-  const datastoresString = process.env.VERTEX_AI_DATASTORES!
-  const dataStoreIds = datastoresString
-    .split(",")
-    .map(id => id.trim())
-    .find(id => id === rag)
-  if (!dataStoreIds) {
-    throw new Error(
-      "VERTEX_AI_DATASTORES environment variable is empty or invalid"
-    )
-  }
-
+const buildRagTool = (dataStoreId: string): any => {
   return {
     retrieval: {
-      vertexRagStore: {
-        ragResources: [{ ragCorpus: dataStoreIds }],
-        similarityTopK: 10,
-        vectorDistanceThreshold: 0.5
+      vertexAiSearch: {
+        datastore: dataStoreId
       },
       disableAttribution: false
     }
@@ -99,21 +85,18 @@ const buildContents = (history: Content[], messages: string): Content[] => {
 }
 
 const extractRagUse = (responseText: string) => {
-  try {
-    const jsonMatch = responseText.match(/{.*}/)
-    if (!jsonMatch) return
-    const parsed = JSON.parse(jsonMatch[0])
-    return parsed?.rag
-  } catch (error) {
-    throw new Error(`Failed to extract RAG from response: ${error}`)
-  }
+  const jsonMatch = responseText.match(/{.*}/)
+  if (!jsonMatch) return
+  const parsed = JSON.parse(jsonMatch[0])
+  return parsed?.rag
 }
 
 export async function POST(request: Request) {
   try {
     validateEnv()
 
-    const dataStores = process.env.VERTEX_AI_DATASTORES!.split(",")
+    const dataStoreProducts = process.env.VERTEX_AI_DATASTORE_PRODUCTS!
+    const dataStoreProcedure = process.env.VERTEX_AI_DATASTORE_PROCEDURE!
 
     const CATEGORIZER_SYSTEM_INSTRUCTION = `
 You are an intelligent assistant that MUST respond exclusively in valid JSON format. No additional text, spaces, or newlines outside of the JSON are permitted.
@@ -121,10 +104,10 @@ You are an intelligent assistant that MUST respond exclusively in valid JSON for
 Your sole task is to categorize user queries and provide a corresponding JSON response.
 
 For queries regarding insurance products, your response MUST be:
-{"rag": "${dataStores[0]}"}
+{"rag": "${dataStoreProducts}"}
 
 For queries concerning processes, procedures, or guidelines, your response MUST be:
-{"rag": ${dataStores[1]}}
+{"rag": "${dataStoreProcedure}"}
 
 Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
 `
@@ -137,7 +120,7 @@ Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
     }
 
     //@TODO use profile to personalize prompt
-    const profile = await getServerProfile()
+    await getServerProfile()
 
     const vertexAI = initializeVertexAI()
     const generativeModel: GenerativeModel = vertexAI.getGenerativeModel({
@@ -171,7 +154,8 @@ Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
     const responseText = getTextFromGenerateContentResponse(
       categorizer.response
     )
-    const ragUse = extractRagUse(responseText) || dataStores[0]
+
+    const ragUse = extractRagUse(responseText) || dataStoreProducts
     const ragTool = buildRagTool(ragUse)
 
     const responseStream = await generativeModel.generateContentStream({
@@ -201,6 +185,8 @@ Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
       headers: { "Content-Type": "text/plain" }
     })
   } catch (error: any) {
+    console.log(error)
+
     let errorMessage = error.message || "An unexpected error occurred"
     const errorCode = error.status || 500
 
