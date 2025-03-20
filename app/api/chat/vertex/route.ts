@@ -1,28 +1,4 @@
-import { getServerProfile } from "@/lib/server/server-chat-helpers"
 import { ChatSettings } from "@/types"
-import {
-  Content,
-  GenerateContentResponse,
-  GenerativeModel,
-  HarmBlockThreshold,
-  HarmCategory,
-  VertexAI
-} from "@google-cloud/vertexai"
-import fs from "fs"
-
-const CATEGORIZER_SYSTEM_INSTRUCTION = `
-You are an intelligent assistant that MUST respond exclusively in valid JSON format. No additional text, spaces, or newlines outside of the JSON are permitted.
-
-Your sole task is to categorize user queries and provide a corresponding JSON response.
-
-For queries regarding insurance products, your response MUST be:
-{"rag": "projects/47793440741/locations/us-central1/ragCorpora/8207810320882728960"}
-
-For queries concerning processes, procedures, or guidelines, your response MUST be:
-{"rag": "projects/47793440741/locations/us-central1/ragCorpora/3019663550151917568"}
-
-Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
-`
 
 interface Message {
   role: string
@@ -32,6 +8,8 @@ interface Message {
 interface RequestBody {
   chatSettings: ChatSettings
   messages: Message[]
+  chatId: string
+  userId: string
 }
 
 const validateEnv = () => {
@@ -50,108 +28,16 @@ const validateEnv = () => {
   }
 }
 
-const loadCredentials = (): any => {
-  const credentialsPath = process.env.VERTEX_AI_CREDENTIALS_PATH!
-  return JSON.parse(fs.readFileSync(credentialsPath, "utf8"))
-}
-
-const initializeVertexAI = (): VertexAI => {
-  return new VertexAI({
-    project: process.env.VERTEX_AI_PROJECT_ID!,
-    location: process.env.VERTEX_AI_LOCATION!,
-    googleAuthOptions: { credentials: loadCredentials() }
-  })
-}
-
-const transformMessages = (messages: Message[]): any[] => {
-  return messages.map(msg => ({
-    role: msg.role,
-    parts: [{ text: msg.parts[0].text }]
-  }))
-}
-
-const buildRagTool = (rag?: string): any => {
-  if (!rag) throw new Error("No RAG provided")
-
-  const datastoresString = process.env.VERTEX_AI_DATASTORES!
-  const dataStoreIds = datastoresString
-    .split(",")
-    .map(id => id.trim())
-    .find(id => id === rag)
-  if (!dataStoreIds) {
-    throw new Error(
-      "VERTEX_AI_DATASTORES environment variable is empty or invalid"
-    )
-  }
-
-  return {
-    retrieval: {
-      vertexRagStore: {
-        ragResources: [{ ragCorpus: dataStoreIds }],
-        similarityTopK: 10,
-        vectorDistanceThreshold: 0.5
-      },
-      disableAttribution: false
-    }
-  }
-}
-
-const getTextFromGenerateContentResponse = (
-  response: GenerateContentResponse
-): string => {
-  return response?.candidates?.[0]?.content?.parts?.[0]?.text || ""
-}
-
-const buildContents = (history: Content[], messages: string): Content[] => {
-  return [
-    ...history,
-    {
-      role: "user",
-      parts: [{ text: messages }]
-    }
-  ]
-}
-
-const extractRagUse = (responseText: string): string => {
-  try {
-    const jsonMatch = responseText.match(/{.*}/)
-    if (!jsonMatch) return ""
-
-    const parsed = JSON.parse(jsonMatch[0])
-    return parsed?.rag || ""
-  } catch (error) {
-    throw new Error(`Failed to extract RAG from response: ${error}`)
-  }
-}
-
 export async function POST(request: Request) {
   try {
     validateEnv()
 
     const json = await request.json()
-    const { chatSettings, messages } = json as RequestBody
+    const { messages, chatId, userId } = json as RequestBody
 
     if (!messages.length) {
       throw new Error("No messages provided")
     }
-
-    //@TODO use profile to personalize prompt
-    const profile = await getServerProfile()
-
-    const vertexAI = initializeVertexAI()
-    const generativeModel: GenerativeModel = vertexAI.getGenerativeModel({
-      model: chatSettings.model,
-      safetySettings: [
-        {
-          category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-          threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
-        }
-      ],
-      generationConfig: {
-        maxOutputTokens: chatSettings.contextLength,
-        temperature: chatSettings.temperature ?? 0
-      }
-    })
 
     const lastMessage = messages.pop()
     if (!lastMessage) {
@@ -160,33 +46,69 @@ export async function POST(request: Request) {
       )
     }
 
-    const history = transformMessages(messages)
-    const contents = buildContents(history, lastMessage.parts[0].text)
-    const categorizer = await generativeModel.generateContent({
-      systemInstruction: CATEGORIZER_SYSTEM_INSTRUCTION,
-      contents: contents
+    const apiUrl = `https://api.dify.ai/v1/chat-messages`
+    const headers = {
+      Authorization: `Bearer ${process.env.DIFY_API_KEY}`,
+      "Content-Type": "application/json"
+    }
+    const body = JSON.stringify({
+      inputs: {},
+      query: lastMessage.parts[0].text,
+      response_mode: "streaming",
+      conversation_id: chatId,
+      user: userId,
+      files: []
     })
 
-    const responseText = getTextFromGenerateContentResponse(
-      categorizer.response
-    )
-    const ragUse = extractRagUse(responseText)
-    const ragTool = buildRagTool(ragUse)
-
-    const responseStream = await generativeModel.generateContentStream({
-      systemInstruction: chatSettings.prompt,
-      contents: contents,
-      tools: [ragTool]
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers,
+      body
     })
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
     const encoder = new TextEncoder()
     const readableStream = new ReadableStream({
       async start(controller) {
+        const reader = response.body?.getReader()
+        if (!reader) {
+          controller.close()
+          return
+        }
+
+        let partialChunk = ""
+
+        const processChunk = (chunk: string) => {
+          partialChunk += chunk
+          const lines = partialChunk.split("\n")
+          partialChunk = lines.pop() || ""
+
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue
+
+            const jsonString = line.slice(6).trim()
+            if (!jsonString) continue
+
+            try {
+              const json = JSON.parse(jsonString)
+              if (json.event === "message" && json.answer) {
+                controller.enqueue(encoder.encode(json.answer))
+              }
+            } catch (error) {
+              console.error("Failed to parse JSON:", error)
+            }
+          }
+        }
+
         try {
-          for await (const chunk of responseStream.stream) {
-            const textChunk = getTextFromGenerateContentResponse(chunk)
-            if (!textChunk) continue
-            controller.enqueue(encoder.encode(textChunk))
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+
+            const chunk = new TextDecoder().decode(value)
+            processChunk(chunk)
           }
         } catch (error) {
           controller.error(error)

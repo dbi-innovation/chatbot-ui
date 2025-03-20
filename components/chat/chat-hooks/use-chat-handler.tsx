@@ -277,6 +277,32 @@ export const useChatHandler = () => {
 
       let generatedText: string | ErrorLog = ""
 
+      if (!currentChat) {
+        currentChat = await handleCreateChat(
+          chatSettings!,
+          profile!,
+          selectedWorkspace!,
+          messageContent,
+          selectedAssistant!,
+          newMessageFiles,
+          setSelectedChat,
+          setChats,
+          setChatFiles
+        )
+      } else {
+        const updatedChat = await updateChat(currentChat.id, {
+          updated_at: new Date().toISOString()
+        })
+
+        setChats(prevChats => {
+          const updatedChats = prevChats.map(prevChat =>
+            prevChat.id === updatedChat.id ? updatedChat : prevChat
+          )
+
+          return updatedChats
+        })
+      }
+
       if (selectedTools.length > 0) {
         setToolInUse("Tools")
 
@@ -338,35 +364,10 @@ export const useChatHandler = () => {
             setIsGenerating,
             setFirstTokenReceived,
             setChatMessages,
-            setToolInUse
+            setToolInUse,
+            currentChat.id
           )
         }
-      }
-
-      if (!currentChat) {
-        currentChat = await handleCreateChat(
-          chatSettings!,
-          profile!,
-          selectedWorkspace!,
-          messageContent,
-          selectedAssistant!,
-          newMessageFiles,
-          setSelectedChat,
-          setChats,
-          setChatFiles
-        )
-      } else {
-        const updatedChat = await updateChat(currentChat.id, {
-          updated_at: new Date().toISOString()
-        })
-
-        setChats(prevChats => {
-          const updatedChats = prevChats.map(prevChat =>
-            prevChat.id === updatedChat.id ? updatedChat : prevChat
-          )
-
-          return updatedChats
-        })
       }
 
       await handleCreateMessages(

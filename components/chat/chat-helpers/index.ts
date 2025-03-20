@@ -225,7 +225,8 @@ export const handleHostedChat = async (
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
   setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setToolInUse: React.Dispatch<React.SetStateAction<string>>
+  setToolInUse: React.Dispatch<React.SetStateAction<string>>,
+  chatId: string
 ) => {
   const provider =
     modelData.provider === "openai" && profile.use_azure_openai
@@ -250,6 +251,8 @@ export const handleHostedChat = async (
   const requestBody = {
     chatSettings: payload.chatSettings,
     messages: formattedMessages,
+    chatId: chatId,
+    userId: profile.user_id,
     customModelId: provider === "custom" ? modelData.hostedId : ""
   }
 
@@ -390,7 +393,57 @@ export const handleCreateChat = async (
   setChats: React.Dispatch<React.SetStateAction<Tables<"chats">[]>>,
   setChatFiles: React.Dispatch<React.SetStateAction<ChatFile[]>>
 ) => {
+  const response = await fetch(`https://api.dify.ai/v1/chat-messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.DIFY_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      inputs: {},
+      query: "แนะนำตัวเอง",
+      response_mode: "streaming",
+      conversation_id: "",
+      user: profile.user_id,
+      files: []
+    })
+  })
+
+  let partialChunk = ""
+  let conversation_id = ""
+
+  const reader = response.body?.getReader()
+  if (reader) {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = new TextDecoder().decode(value)
+      partialChunk += chunk
+
+      const lines = partialChunk.split("\n")
+      partialChunk = lines.pop() || ""
+
+      lines.forEach(line => {
+        if (line.startsWith("data: ")) {
+          const jsonString = line.slice(6).trim()
+          if (jsonString) {
+            try {
+              const json = JSON.parse(jsonString)
+              if (json.conversation_id) {
+                conversation_id = json.conversation_id
+              }
+            } catch (error) {
+              console.error("Failed to parse JSON:", error)
+            }
+          }
+        }
+      })
+    }
+  }
+
   const createdChat = await createChat({
+    id: conversation_id,
     user_id: profile.user_id,
     workspace_id: selectedWorkspace.id,
     assistant_id: selectedAssistant?.id || null,
