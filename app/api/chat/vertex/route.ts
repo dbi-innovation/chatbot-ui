@@ -10,20 +10,6 @@ import {
 } from "@google-cloud/vertexai"
 import fs from "fs"
 
-const CATEGORIZER_SYSTEM_INSTRUCTION = `
-You are an intelligent assistant that MUST respond exclusively in valid JSON format. No additional text, spaces, or newlines outside of the JSON are permitted.
-
-Your sole task is to categorize user queries and provide a corresponding JSON response.
-
-For queries regarding insurance products, your response MUST be:
-{"rag": "projects/47793440741/locations/us-central1/ragCorpora/8207810320882728960"}
-
-For queries concerning processes, procedures, or guidelines, your response MUST be:
-{"rag": "projects/47793440741/locations/us-central1/ragCorpora/3019663550151917568"}
-
-Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
-`
-
 interface Message {
   role: string
   parts: { text: string }[]
@@ -112,13 +98,12 @@ const buildContents = (history: Content[], messages: string): Content[] => {
   ]
 }
 
-const extractRagUse = (responseText: string): string => {
+const extractRagUse = (responseText: string) => {
   try {
     const jsonMatch = responseText.match(/{.*}/)
-    if (!jsonMatch) return ""
-
+    if (!jsonMatch) return
     const parsed = JSON.parse(jsonMatch[0])
-    return parsed?.rag || ""
+    return parsed?.rag
   } catch (error) {
     throw new Error(`Failed to extract RAG from response: ${error}`)
   }
@@ -127,6 +112,22 @@ const extractRagUse = (responseText: string): string => {
 export async function POST(request: Request) {
   try {
     validateEnv()
+
+    const rags = process.env.VERTEX_AI_DATASTORES!.split(",")
+
+    const CATEGORIZER_SYSTEM_INSTRUCTION = `
+You are an intelligent assistant that MUST respond exclusively in valid JSON format. No additional text, spaces, or newlines outside of the JSON are permitted.
+
+Your sole task is to categorize user queries and provide a corresponding JSON response.
+
+For queries regarding insurance products, your response MUST be:
+{"rag": "${rags[0]}"}
+
+For queries concerning processes, procedures, or guidelines, your response MUST be:
+{"rag": ${rags[1]}}
+
+Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
+`
 
     const json = await request.json()
     const { chatSettings, messages } = json as RequestBody
@@ -170,7 +171,7 @@ export async function POST(request: Request) {
     const responseText = getTextFromGenerateContentResponse(
       categorizer.response
     )
-    const ragUse = extractRagUse(responseText)
+    const ragUse = extractRagUse(responseText) || rags[0]
     const ragTool = buildRagTool(ragUse)
 
     const responseStream = await generativeModel.generateContentStream({
