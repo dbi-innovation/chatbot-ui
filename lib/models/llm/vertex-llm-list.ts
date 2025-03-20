@@ -56,10 +56,20 @@ const GEMINI_2_0_PRO_EXP_02_05: LLM = {
   imageInput: true
 }
 
+const GEMINI_2_0_FLASH_001: LLM = {
+  modelId: "gemini-2.0-flash-001",
+  modelName: AGENT_NAME ?? "Gemini 2.0 Flash 001",
+  provider: "vertex",
+  hostedId: "gemini-flash-001",
+  platformLink: GOOGLE_PLATORM_LINK,
+  imageInput: true
+}
+
 export const VERTEX_AI_LLM_LIST: LLM[] = [
   GEMINI_PRO,
   GEMINI_PRO_VISION,
   GEMINI_1_5_PRO,
   GEMINI_1_5_FLASH,
+  GEMINI_2_0_FLASH_001,
   GEMINI_2_0_PRO_EXP_02_05
 ]
