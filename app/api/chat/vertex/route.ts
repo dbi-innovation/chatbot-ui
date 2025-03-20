@@ -113,7 +113,7 @@ export async function POST(request: Request) {
   try {
     validateEnv()
 
-    const rags = process.env.VERTEX_AI_DATASTORES!.split(",")
+    const dataStores = process.env.VERTEX_AI_DATASTORES!.split(",")
 
     const CATEGORIZER_SYSTEM_INSTRUCTION = `
 You are an intelligent assistant that MUST respond exclusively in valid JSON format. No additional text, spaces, or newlines outside of the JSON are permitted.
@@ -121,10 +121,10 @@ You are an intelligent assistant that MUST respond exclusively in valid JSON for
 Your sole task is to categorize user queries and provide a corresponding JSON response.
 
 For queries regarding insurance products, your response MUST be:
-{"rag": "${rags[0]}"}
+{"rag": "${dataStores[0]}"}
 
 For queries concerning processes, procedures, or guidelines, your response MUST be:
-{"rag": ${rags[1]}}
+{"rag": ${dataStores[1]}}
 
 Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
 `
@@ -171,7 +171,7 @@ Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
     const responseText = getTextFromGenerateContentResponse(
       categorizer.response
     )
-    const ragUse = extractRagUse(responseText) || rags[0]
+    const ragUse = extractRagUse(responseText) || dataStores[0]
     const ragTool = buildRagTool(ragUse)
 
     const responseStream = await generativeModel.generateContentStream({
