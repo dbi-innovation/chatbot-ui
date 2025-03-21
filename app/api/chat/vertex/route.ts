@@ -184,14 +184,14 @@ You are a text classification engine that analyzes text data and assigns a singl
       categorizer.response
     )
 
+
     const ragUse = extractRagUse(
       responseText,
       dataStoreProducts,
       dataStoreProcedure
     )
-
     console.log("Classification: => ", ragUse)
-
+    
     const ragTool = buildRagTool(ragUse)
 
     const responseStream = await generativeModel.generateContentStream({
