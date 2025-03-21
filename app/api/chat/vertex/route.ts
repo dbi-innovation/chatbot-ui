@@ -6,6 +6,7 @@ import {
   GenerativeModel,
   HarmBlockThreshold,
   HarmCategory,
+  SchemaType,
   VertexAI
 } from "@google-cloud/vertexai"
 import fs from "fs"
@@ -126,6 +127,7 @@ You are a text classification engine that analyzes text data and assigns a singl
 2. The response must strictly match one of these JSON formats:
     - {"rag": "products"}
     - {"rag": "procedure"}
+3. If unsure, always classify as Insurance Products and return {"rag": "products"}.
 
 ### Constraints
 - Do not return variations like {"rag": "Insurance Products"} or {"rag": "Processes"}.
@@ -152,6 +154,22 @@ You are a text classification engine that analyzes text data and assigns a singl
     await getServerProfile()
 
     const vertexAI = initializeVertexAI()
+    const classificationModel = vertexAI.getGenerativeModel({
+      model: chatSettings.model,
+      generationConfig: {
+        temperature: 0,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+            rag: {
+              type: SchemaType.STRING
+            }
+          }
+        }
+      }
+    })
+
     const generativeModel: GenerativeModel = vertexAI.getGenerativeModel({
       model: chatSettings.model,
       safetySettings: [
@@ -175,7 +193,7 @@ You are a text classification engine that analyzes text data and assigns a singl
 
     const history = transformMessages(messages)
     const contents = buildContents(history, lastMessage.parts[0].text)
-    const categorizer = await generativeModel.generateContent({
+    const categorizer = await classificationModel.generateContent({
       systemInstruction: CATEGORIZER_SYSTEM_INSTRUCTION,
       contents: contents
     })
@@ -184,14 +202,13 @@ You are a text classification engine that analyzes text data and assigns a singl
       categorizer.response
     )
 
-
     const ragUse = extractRagUse(
       responseText,
       dataStoreProducts,
       dataStoreProcedure
     )
     console.log("Classification: => ", ragUse)
-    
+
     const ragTool = buildRagTool(ragUse)
 
     const responseStream = await generativeModel.generateContentStream({
@@ -209,6 +226,11 @@ You are a text classification engine that analyzes text data and assigns a singl
             if (!textChunk) continue
             controller.enqueue(encoder.encode(textChunk))
           }
+          controller.enqueue(
+            encoder.encode(
+              `\n\n --- \n\n **Grounded data from :** ${ragUse.split("/").pop()}`
+            )
+          )
         } catch (error) {
           controller.error(error)
         } finally {
