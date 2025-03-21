@@ -117,27 +117,28 @@ export async function POST(request: Request) {
 
     const CATEGORIZER_SYSTEM_INSTRUCTION = `
 ### Job Description
-You are a text classification engine that analyzes text data and assigns a single category based on its content.
+You are a text classification engine that analyzes text data and assigns a single category.
 
 ### Task
-1. Your task is to classify the input text into exactly one of the following categories:
-    - **Insurance Products**
-    - **Processes, Procedures, or Guidelines**
-2. You must return the category in the strict JSON format:
-    - **Insurance Products**  {"rag": "products"}
-    - **Processes, Procedures, or Guidelines**  {"rag": "procedure"}
-3. You are strictly forbidden from returning anything other than the specified JSON format.
-
-### Format
-- The response must contain only the JSON output with the rag key.
-- Example valid outputs:
-  - {"rag": "products"}
-  - {"rag": "procedure"}
+1. Classify the input text into exactly one of these categories:
+    - Insurance Products → Return {"rag": "products"}
+    - Processes, Procedures, or Guidelines → Return {"rag": "procedure"}
+2. The response must strictly match one of these JSON formats:
+    - {"rag": "products"}
+    - {"rag": "procedure"}
 
 ### Constraints
-- Do not include any additional text, explanations, or variations.
-- Ensure that exactly one category is assigned.
-- Any text unrelated to the given categories must be classified as **Insurance Products** by default.
+- Do not return variations like {"rag": "Insurance Products"} or {"rag": "Processes"}.
+- Do not include extra text, explanations, or formatting.
+- If unsure, classify under Processes, Procedures, or Guidelines and return {"rag": "procedure"}.
+
+### Example Inputs & Outputs
+- Input: "Car insurance policy details" → Output: {"rag": "products"}
+- Input: "Claim filing procedure" → Output: {"rag": "procedure"}
+
+### Enforcement
+- If the output does not exactly match the required JSON format, it is invalid.
+- Any deviation from {"rag": "products"} or {"rag": "procedure"} is an error.
 `
 
     const json = await request.json()
@@ -188,6 +189,8 @@ You are a text classification engine that analyzes text data and assigns a singl
       dataStoreProducts,
       dataStoreProcedure
     )
+
+    console.log("Classification: => ", ragUse)
 
     const ragTool = buildRagTool(ragUse)
 
