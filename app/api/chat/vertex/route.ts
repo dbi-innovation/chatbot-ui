@@ -113,7 +113,7 @@ const extractRagUse = (responseText: string): string => {
 }
 
 const categorizerSystemInstruction = () => {
-  const filePath = "instructions/classification.txt"
+  const filePath = "./instructions/classification.txt"
   try {
     return fs.readFileSync(filePath, "utf8")
   } catch (error) {
