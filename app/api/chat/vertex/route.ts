@@ -84,11 +84,28 @@ const buildContents = (history: Content[], messages: string): Content[] => {
   ]
 }
 
-const extractRagUse = (responseText: string) => {
-  const jsonMatch = responseText.match(/{.*}/)
-  if (!jsonMatch) return
-  const parsed = JSON.parse(jsonMatch[0])
-  return parsed?.rag
+const extractRagUse = (
+  responseText: string,
+  dataStoreProducts: string,
+  dataStoreProcedure: string
+): string => {
+  try {
+    const jsonMatch = responseText.match(/{.*}/)
+    if (!jsonMatch) return dataStoreProducts
+
+    const { rag } = JSON.parse(jsonMatch[0])
+    switch (rag?.toUpperCase()) {
+      case "PRODUCTS":
+        return dataStoreProducts
+      case "PROCEDURE":
+        return dataStoreProcedure
+      default:
+        return dataStoreProducts
+    }
+  } catch (error) {
+    console.error("Failed to parse responseText:", error)
+    return dataStoreProducts
+  }
 }
 
 export async function POST(request: Request) {
@@ -99,17 +116,28 @@ export async function POST(request: Request) {
     const dataStoreProcedure = process.env.VERTEX_AI_DATASTORE_PROCEDURE!
 
     const CATEGORIZER_SYSTEM_INSTRUCTION = `
-You are an intelligent assistant that MUST respond exclusively in valid JSON format. No additional text, spaces, or newlines outside of the JSON are permitted.
+### Job Description
+You are a text classification engine that analyzes text data and assigns a single category based on its content.
 
-Your sole task is to categorize user queries and provide a corresponding JSON response.
+### Task
+1. Your task is to classify the input text into exactly one of the following categories:
+    - **Insurance Products**
+    - **Processes, Procedures, or Guidelines**
+2. You must return the category in the strict JSON format:
+    - **Insurance Products**  {"rag": "products"}
+    - **Processes, Procedures, or Guidelines**  {"rag": "procedure"}
+3. You are strictly forbidden from returning anything other than the specified JSON format.
 
-For queries regarding insurance products, your response MUST be:
-{"rag": "${dataStoreProducts}"}
+### Format
+- The response must contain only the JSON output with the rag key.
+- Example valid outputs:
+  - {"rag": "products"}
+  - {"rag": "procedure"}
 
-For queries concerning processes, procedures, or guidelines, your response MUST be:
-{"rag": "${dataStoreProcedure}"}
-
-Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
+### Constraints
+- Do not include any additional text, explanations, or variations.
+- Ensure that exactly one category is assigned.
+- Any text unrelated to the given categories must be classified as **Insurance Products** by default.
 `
 
     const json = await request.json()
@@ -155,7 +183,12 @@ Output ONLY the JSON, ensuring it is syntactically correct and nothing else.
       categorizer.response
     )
 
-    const ragUse = extractRagUse(responseText) || dataStoreProducts
+    const ragUse = extractRagUse(
+      responseText,
+      dataStoreProducts,
+      dataStoreProcedure
+    )
+
     const ragTool = buildRagTool(ragUse)
 
     const responseStream = await generativeModel.generateContentStream({
