@@ -114,7 +114,12 @@ const extractRagUse = (responseText: string): string => {
 
 const categorizerSystemInstruction = () => {
   const filePath = "instructions/classification.txt"
-  return fs.readFileSync(filePath, "utf8")
+  try {
+    return fs.readFileSync(filePath, "utf8")
+  } catch (error) {
+    console.error("Failed to read classification instruction file:", error)
+    return ""
+  }
 }
 
 export async function POST(request: Request) {
