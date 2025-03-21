@@ -100,13 +100,10 @@ const extractRagUse = (responseText: string): string => {
       case "PRODUCT_DETAILS":
         return DS_PRODUCTS
       case "RECOMMENDATION_AND_COMPARISON":
-        console.log("DS_COMPARE", DS_COMPARE)
         return DS_COMPARE
       case "PROCESS_AND_PROCEDURE":
-        console.log("DS_PROCESS", DS_PROCESS)
         return DS_PROCESS
       default:
-        console.log("DF", DS_PRODUCTS)
         return DS_PRODUCTS
     }
   } catch (error) {
@@ -123,7 +120,7 @@ const categorizerSystemInstruction = () => {
 export async function POST(request: Request) {
   try {
     validateEnv()
-
+    
     const json = await request.json()
     const { chatSettings, messages } = json as RequestBody
 
@@ -203,6 +200,11 @@ export async function POST(request: Request) {
             if (!textChunk) continue
             controller.enqueue(encoder.encode(textChunk))
           }
+          controller.enqueue(
+            encoder.encode(
+              `\n\n --- \n\n **Grounded data from :** ${ragUse.split("/").pop()}`
+            )
+          )
         } catch (error) {
           controller.error(error)
         } finally {
