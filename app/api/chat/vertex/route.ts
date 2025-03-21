@@ -23,8 +23,9 @@ interface RequestBody {
 
 const validateEnv = () => {
   const requiredEnvVars = [
-    "VERTEX_AI_DATASTORE_PRODUCTS",
-    "VERTEX_AI_DATASTORE_PROCEDURE",
+    "VERTEX_AI_DATASTORE_PRODUCT_DETAILS",
+    "VERTEX_AI_DATASTORE_PROCESS_AND_PROCEDURE",
+    "VERTEX_AI_DATASTORE_RECOMMENDATION_AND_COMPARISON",
     "VERTEX_AI_CREDENTIALS_PATH",
     "VERTEX_AI_PROJECT_ID",
     "VERTEX_AI_LOCATION"
@@ -37,6 +38,11 @@ const validateEnv = () => {
     )
   }
 }
+
+const DS_PRODUCTS = process.env.VERTEX_AI_DATASTORE_PRODUCT_DETAILS!
+const DS_PROCESS = process.env.VERTEX_AI_DATASTORE_PROCESS_AND_PROCEDURE!
+const DS_COMPARE =
+  process.env.VERTEX_AI_DATASTORE_RECOMMENDATION_AND_COMPARISON!
 
 const loadCredentials = (): any => {
   const credentialsPath = process.env.VERTEX_AI_CREDENTIALS_PATH!
@@ -51,7 +57,7 @@ const initializeVertexAI = (): VertexAI => {
   })
 }
 
-const transformMessages = (messages: Message[]): any[] => {
+const transformMessages = (messages: Message[]): Content[] => {
   return messages.map(msg => ({
     role: msg.role,
     parts: [{ text: msg.parts[0].text }]
@@ -85,63 +91,38 @@ const buildContents = (history: Content[], messages: string): Content[] => {
   ]
 }
 
-const extractRagUse = (
-  responseText: string,
-  dataStoreProducts: string,
-  dataStoreProcedure: string
-): string => {
+const extractRagUse = (responseText: string): string => {
   try {
-    const jsonMatch = responseText.match(/{.*}/)
-    if (!jsonMatch) return dataStoreProducts
+    if (!responseText) return DS_PRODUCTS
+    const { category } = JSON.parse(responseText)
 
-    const { rag } = JSON.parse(jsonMatch[0])
-    switch (rag?.toUpperCase()) {
-      case "PRODUCTS":
-        return dataStoreProducts
-      case "PROCEDURE":
-        return dataStoreProcedure
+    switch (category?.toUpperCase()) {
+      case "PRODUCT_DETAILS":
+        return DS_PRODUCTS
+      case "RECOMMENDATION_AND_COMPARISON":
+        console.log("DS_COMPARE", DS_COMPARE)
+        return DS_COMPARE
+      case "PROCESS_AND_PROCEDURE":
+        console.log("DS_PROCESS", DS_PROCESS)
+        return DS_PROCESS
       default:
-        return dataStoreProducts
+        console.log("DF", DS_PRODUCTS)
+        return DS_PRODUCTS
     }
   } catch (error) {
     console.error("Failed to parse responseText:", error)
-    return dataStoreProducts
+    return DS_PRODUCTS
   }
+}
+
+const categorizerSystemInstruction = () => {
+  const filePath = "instructions/classification.txt"
+  return fs.readFileSync(filePath, "utf8")
 }
 
 export async function POST(request: Request) {
   try {
     validateEnv()
-
-    const dataStoreProducts = process.env.VERTEX_AI_DATASTORE_PRODUCTS!
-    const dataStoreProcedure = process.env.VERTEX_AI_DATASTORE_PROCEDURE!
-
-    const CATEGORIZER_SYSTEM_INSTRUCTION = `
-### Job Description
-You are a text classification engine that analyzes text data and assigns a single category.
-
-### Task
-1. Classify the input text into exactly one of these categories:
-    - Insurance Products → Return {"rag": "products"}
-    - Processes, Procedures, or Guidelines → Return {"rag": "procedure"}
-2. The response must strictly match one of these JSON formats:
-    - {"rag": "products"}
-    - {"rag": "procedure"}
-3. If unsure, always classify as Insurance Products and return {"rag": "products"}.
-
-### Constraints
-- Do not return variations like {"rag": "Insurance Products"} or {"rag": "Processes"}.
-- Do not include extra text, explanations, or formatting.
-- If unsure, classify under Processes, Procedures, or Guidelines and return {"rag": "procedure"}.
-
-### Example Inputs & Outputs
-- Input: "Car insurance policy details" → Output: {"rag": "products"}
-- Input: "Claim filing procedure" → Output: {"rag": "procedure"}
-
-### Enforcement
-- If the output does not exactly match the required JSON format, it is invalid.
-- Any deviation from {"rag": "products"} or {"rag": "procedure"} is an error.
-`
 
     const json = await request.json()
     const { chatSettings, messages } = json as RequestBody
@@ -162,7 +143,7 @@ You are a text classification engine that analyzes text data and assigns a singl
         responseSchema: {
           type: SchemaType.OBJECT,
           properties: {
-            rag: {
+            category: {
               type: SchemaType.STRING
             }
           }
@@ -194,7 +175,7 @@ You are a text classification engine that analyzes text data and assigns a singl
     const history = transformMessages(messages)
     const contents = buildContents(history, lastMessage.parts[0].text)
     const categorizer = await classificationModel.generateContent({
-      systemInstruction: CATEGORIZER_SYSTEM_INSTRUCTION,
+      systemInstruction: categorizerSystemInstruction(),
       contents: contents
     })
 
@@ -202,11 +183,7 @@ You are a text classification engine that analyzes text data and assigns a singl
       categorizer.response
     )
 
-    const ragUse = extractRagUse(
-      responseText,
-      dataStoreProducts,
-      dataStoreProcedure
-    )
+    const ragUse = extractRagUse(responseText)
     console.log("Classification: => ", ragUse)
 
     const ragTool = buildRagTool(ragUse)
@@ -226,14 +203,14 @@ You are a text classification engine that analyzes text data and assigns a singl
             if (!textChunk) continue
             controller.enqueue(encoder.encode(textChunk))
           }
+        } catch (error) {
+          controller.error(error)
+        } finally {
           controller.enqueue(
             encoder.encode(
               `\n\n --- \n\n **Grounded data from :** ${ragUse.split("/").pop()}`
             )
           )
-        } catch (error) {
-          controller.error(error)
-        } finally {
           controller.close()
         }
       }
