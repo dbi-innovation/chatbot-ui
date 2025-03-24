@@ -125,7 +125,7 @@ const categorizerSystemInstruction = () => {
 export async function POST(request: Request) {
   try {
     validateEnv()
-    
+
     const json = await request.json()
     const { chatSettings, messages } = json as RequestBody
 
@@ -205,11 +205,6 @@ export async function POST(request: Request) {
             if (!textChunk) continue
             controller.enqueue(encoder.encode(textChunk))
           }
-          controller.enqueue(
-            encoder.encode(
-              `\n\n --- \n\n **Grounded data from :** ${ragUse.split("/").pop()}`
-            )
-          )
         } catch (error) {
           controller.error(error)
         } finally {
