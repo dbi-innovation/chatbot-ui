@@ -196,6 +196,15 @@ export async function POST(request: Request) {
       tools: [ragTool]
     })
 
+    const groundedDisplay = () => {
+      const datastoreMap: Record<string, string> = {
+        [DS_PRODUCTS]: "Product Details",
+        [DS_PROCESS]: "Process and Procedure",
+        [DS_COMPARE]: "Recommendation and Comparison"
+      }
+      return datastoreMap[ragUse] || "Unknown Category"
+    }
+
     const encoder = new TextEncoder()
     const readableStream = new ReadableStream({
       async start(controller) {
@@ -210,7 +219,7 @@ export async function POST(request: Request) {
         } finally {
           controller.enqueue(
             encoder.encode(
-              `\n\n --- \n\n **Grounded data from :** ${ragUse.split("/").pop()}`
+              `\n\n --- \n\n **Grounded data from :** ${groundedDisplay()}`
             )
           )
           controller.close()
