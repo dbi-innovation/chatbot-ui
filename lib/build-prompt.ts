@@ -121,7 +121,8 @@ export async function buildFinalMessages(
     incorrect_reason: "",
     is_content_correct: null,
     is_content_liked: null,
-    error_log: null
+    error_log: null,
+    grounded_source: ""
   }
 
   finalMessages.unshift(tempSystemMessage)

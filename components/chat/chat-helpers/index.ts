@@ -117,7 +117,8 @@ export const createTempMessages = (
       incorrect_reason: "",
       is_content_correct: null,
       is_content_liked: null,
-      error_log: null
+      error_log: null,
+      grounded_source: ""
     },
     fileItems: []
   }
@@ -139,7 +140,8 @@ export const createTempMessages = (
       incorrect_reason: "",
       is_content_correct: null,
       is_content_liked: null,
-      error_log: null
+      error_log: null,
+      grounded_source: ""
     },
     fileItems: []
   }
@@ -452,12 +454,23 @@ export const handleCreateMessages = async (
     chat_id: currentChat.id,
     assistant_id: selectedAssistant?.id || null,
     user_id: profile.user_id,
-    content: isErrorLog(generatedText) ? "" : generatedText,
+    content: "",
+    grounded_source: "",
     model: modelData.modelId,
     role: "assistant",
     sequence_number: chatMessages.length + 1,
-    error_log: isErrorLog(generatedText) ? generatedText.error : null,
+    error_log: null,
     image_paths: []
+  }
+
+  if (!isErrorLog(generatedText)) {
+    const [content, groundedSource] = generatedText.split(
+      "\n\n --- \n\n **Grounded data from :**"
+    )
+    finalAssistantMessage.content = content || ""
+    finalAssistantMessage.grounded_source = groundedSource || ""
+  } else {
+    finalAssistantMessage.error_log = generatedText.error
   }
 
   let finalChatMessages: ChatMessage[] = []
