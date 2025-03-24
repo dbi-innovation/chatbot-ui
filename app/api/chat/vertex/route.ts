@@ -125,7 +125,7 @@ const categorizerSystemInstruction = () => {
 export async function POST(request: Request) {
   try {
     validateEnv()
-    
+
     const json = await request.json()
     const { chatSettings, messages } = json as RequestBody
 
