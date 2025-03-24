@@ -719,6 +719,7 @@ export type Database = {
           created_at: string
           error_log: string | null
           feedback: string | null
+          grounded_source: string | null
           id: string
           image_paths: string[]
           incorrect_reason: string | null
@@ -737,6 +738,7 @@ export type Database = {
           created_at?: string
           error_log?: string | null
           feedback?: string | null
+          grounded_source?: string | null
           id?: string
           image_paths: string[]
           incorrect_reason?: string | null
@@ -755,6 +757,7 @@ export type Database = {
           created_at?: string
           error_log?: string | null
           feedback?: string | null
+          grounded_source?: string | null
           id?: string
           image_paths?: string[]
           incorrect_reason?: string | null
