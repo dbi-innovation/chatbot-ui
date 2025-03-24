@@ -70,7 +70,7 @@ const readInstructionFile = (filePath: string): string => {
 export const getSystemInstruction = (type: string): string => {
   const instructions: Record<string, string> = {
     categorizer: "./instructions/classification.txt",
-    questionAnalytics: "./instructions/question-analytics.txt",
+    questionAnalytics: "./instructions/question-analytics.txt"
   }
   return readInstructionFile(instructions[type])
 }
