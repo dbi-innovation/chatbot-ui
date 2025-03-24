@@ -13,6 +13,10 @@ import fs from "fs"
 import { Message } from "./interface"
 import { ENV_VARS } from "./config"
 
+const CATEGORIZER_INSTRUCTION_PATH = "./instructions/classification.txt"
+const QUESTION_ANALYTICS_INSTRUCTION_PATH =
+  "./instructions/question-analytics.txt"
+
 export const transformMessages = (messages: Message[]): Content[] =>
   messages.map(msg => ({
     role: msg.role,
@@ -69,8 +73,8 @@ const readInstructionFile = (filePath: string): string => {
 
 export const getSystemInstruction = (type: string): string => {
   const instructions: Record<string, string> = {
-    categorizer: "./instructions/classification.txt",
-    questionAnalytics: "./instructions/question-analytics.txt"
+    categorizer: CATEGORIZER_INSTRUCTION_PATH,
+    questionAnalytics: QUESTION_ANALYTICS_INSTRUCTION_PATH
   }
   return readInstructionFile(instructions[type])
 }
