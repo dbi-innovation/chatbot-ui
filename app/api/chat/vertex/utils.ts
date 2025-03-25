@@ -7,6 +7,7 @@ import {
   HarmCategory,
   RetrievalTool,
   SchemaType,
+  StreamGenerateContentResult,
   VertexAI
 } from "@google-cloud/vertexai"
 import fs from "fs"
@@ -247,7 +248,10 @@ export async function generateResponseStream(
   })
 }
 
-export function createReadableResponse(responseStream: any, ragUse: string) {
+export function createReadableResponse(
+  responseStream: StreamGenerateContentResult,
+  ragUse: string
+) {
   const encoder = new TextEncoder()
   const readableStream = new ReadableStream({
     async start(controller) {
