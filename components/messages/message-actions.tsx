@@ -16,12 +16,10 @@ interface MessageActionsProps {
 }
 
 export const MessageActions: FC<MessageActionsProps> = ({
-  isAssistant,
   isLast,
   isEditing,
   isHovering,
-  onCopy,
-  onEdit
+  onCopy
 }) => {
   const { isGenerating } = useContext(ChatbotUIContext)
 
@@ -44,21 +42,6 @@ export const MessageActions: FC<MessageActionsProps> = ({
 
   return (isLast && isGenerating) || isEditing ? null : (
     <div className="text-muted-foreground flex items-center space-x-2">
-      {!isAssistant && isHovering && (
-        <WithTooltip
-          delayDuration={1000}
-          side="bottom"
-          display={<div>Edit</div>}
-          trigger={
-            <IconEdit
-              className="cursor-pointer hover:opacity-50"
-              size={MESSAGE_ICON_SIZE}
-              onClick={onEdit}
-            />
-          }
-        />
-      )}
-
       {(isHovering || isLast) && (
         <WithTooltip
           delayDuration={1000}
