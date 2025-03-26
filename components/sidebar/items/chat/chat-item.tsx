@@ -99,11 +99,9 @@ export const ChatItem: FC<ChatItemProps> = ({ chat }) => {
           e.stopPropagation()
           e.preventDefault()
         }}
-        className={`ml-2 flex space-x-2 ${!isActive && "w-11 opacity-0 group-hover:opacity-100"}`}
+        className={`ml-2 flex space-x-2 ${!isActive && "w-6 opacity-0 group-hover:opacity-100"}`}
       >
         <UpdateChat chat={chat} />
-
-        <DeleteChat chat={chat} />
       </div>
     </div>
   )
