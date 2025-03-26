@@ -13,15 +13,20 @@ import {
 import fs from "fs"
 import { Message } from "./interface"
 import { ENV_VARS } from "./config"
+import pl from "nodejs-polars"
+import { createResponse } from "@/lib/server/server-utils"
 
 const CATEGORIZER_INSTRUCTION_PATH = "./instructions/classification.txt"
 const QUESTION_ANALYTICS_INSTRUCTION_PATH =
   "./instructions/question-analytics.txt"
+const SEPARATOR = "\n\n --- \n\n"
 
 export const transformMessages = (messages: Message[]): Content[] =>
-  messages.map(msg => ({
-    role: msg.role,
-    parts: [{ text: msg.parts[0].text }]
+  messages.map(({ role, parts }) => ({
+    role,
+    parts: parts.map(({ text }) => ({
+      text: role === "model" ? text.split(SEPARATOR)[0] : text
+    }))
   }))
 
 export const buildRagTool = (dataStoreId: string): RetrievalTool => {
@@ -248,26 +253,66 @@ export async function generateResponseStream(
   })
 }
 
+function generateRankingResponse(rank?: number, point?: number): string {
+  if (!rank || !point) return ""
+
+  const messages: Record<number, string> = {
+    1: `${SEPARATOR} คุณเก่งที่สุดเลยค่ะ! 🥇 ทำคะแนนได้สูงสุดแล้ว คุณอยู่ในอันดับที่ ${rank} คุณมีคะแนน ${point} เยี่ยมมากค่ะ!`,
+    2: `${SEPARATOR} คุณเก่งมากเลยค่ะ! 🥈 คุณอยู่ในอันดับที่ ${rank} คุณมีคะแนน ${point} คะแนน ยินดีด้วยค่ะ! อย่างไรก็ตาม ยังมีโอกาสในการเป็นอันดับ 1 นะคะ!`,
+    3: `${SEPARATOR} คุณเก่งนะคะ! 🥉 คุณอยู่ในอันดับที่ ${rank} คุณมีคะแนน ${point} คะแนน ยินดีด้วยค่ะ!`
+  }
+
+  return (
+    messages[rank] ||
+    `${SEPARATOR} ตอนนี้คุณอยู่ในอันดับที่ ${rank} คุณมีคะแนน ${point} คะแนน สู้ๆ นะคะ!`
+  )
+}
+
 export function createReadableResponse(
   responseStream: StreamGenerateContentResult,
-  ragUse: string
+  ragUse: string,
+  email?: string
 ) {
   const encoder = new TextEncoder()
+
+  const enqueueText = (
+    controller: ReadableStreamDefaultController,
+    text: string
+  ) => {
+    if (text) controller.enqueue(encoder.encode(text))
+  }
+
   const readableStream = new ReadableStream({
     async start(controller) {
       try {
         for await (const chunk of responseStream.stream) {
           const textChunk = getTextFromGenerateContentResponse(chunk)
-          if (textChunk) controller.enqueue(encoder.encode(textChunk))
+          enqueueText(controller, textChunk)
         }
       } catch (error) {
         controller.error(error)
       } finally {
-        controller.enqueue(
-          encoder.encode(
-            `\n\n --- \n\n **Grounded data from :** ${groundedDisplay(ragUse)}`
-          )
-        )
+        await handleFinalization(controller, email, ragUse)
+      }
+
+      async function handleFinalization(
+        controller: ReadableStreamDefaultController,
+        email: string | undefined,
+        ragUse: string
+      ) {
+        if (email && ragUse === ENV_VARS.DS_PRODUCTS) {
+          try {
+            const rank = await getUserRankingByEmail(email)
+            const response = generateRankingResponse(rank?.rank, rank?.point)
+            enqueueText(controller, response)
+          } catch (error) {
+            console.error("Error fetching user rank:", error)
+          }
+        }
+
+        const groundedResponse = `${SEPARATOR} **Grounded data from :** ${groundedDisplay(ragUse)}`
+
+        enqueueText(controller, groundedResponse)
         controller.close()
       }
     }
@@ -279,12 +324,32 @@ export function createReadableResponse(
 }
 
 export function createErrorResponse(error: any) {
-  return new Response(
-    JSON.stringify({
-      message: error.message || "An unexpected error occurred"
-    }),
-    {
-      status: error.status || 500
-    }
+  return createResponse(
+    { message: error.message || "An unexpected error occurred" },
+    error.status || 500
   )
+}
+
+export async function getUserRankingByEmail(email: string) {
+  try {
+    const df = await pl.readCSV("./ranks/dashboard.csv")
+    const sortedDf = df.sort("Total Point", true)
+    const rankedDf = sortedDf.withColumns(
+      pl.Series(
+        "rank",
+        Array.from({ length: sortedDf.height }, (_, i) => i + 1)
+      )
+    )
+    const filtered = rankedDf.filter(pl.col("userlan").eq(pl.lit(email)))
+
+    return {
+      rank: filtered.getColumn("rank").get(0),
+      total: sortedDf.height,
+      point: filtered.getColumn("Total Point").get(0),
+      user: email
+    }
+  } catch (error) {
+    console.error("Error reading or processing CSV file:", error)
+    return
+  }
 }
