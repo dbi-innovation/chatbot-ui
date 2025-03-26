@@ -37,6 +37,28 @@ export async function getServerProfile() {
   return profileWithKeys
 }
 
+export async function getServerUserProfile() {
+  const cookieStore = cookies()
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        }
+      }
+    }
+  )
+
+  const user = (await supabase.auth.getUser()).data.user
+  if (!user) {
+    throw new Error("User not found")
+  }
+
+  return user
+}
+
 function addApiKeysToProfile(profile: Tables<"profiles">) {
   const apiKeys = {
     [VALID_ENV_KEYS.OPENAI_API_KEY]: "openai_api_key",
