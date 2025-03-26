@@ -9,7 +9,6 @@ import { IconRobotFace } from "@tabler/icons-react"
 import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
 import { FC, useContext, useRef } from "react"
-import { DeleteChat } from "./delete-chat"
 import { UpdateChat } from "./update-chat"
 
 interface ChatItemProps {
