@@ -8,16 +8,21 @@ import {
   DropdownMenuTrigger
 } from "../ui/dropdown-menu"
 import { Input } from "../ui/input"
-import { PROVIDERS } from "./constants"
 import { ApplicationOption } from "./app-option"
 import { Provider } from "@/types"
 import { updateWorkspace } from "@/db/workspaces"
+import { formatToTitleCase } from "@/lib/helper/formatt-message"
 
 interface ApplicationSelectProps {}
 
 export const ApplicationSelect: FC<ApplicationSelectProps> = () => {
-  const { profile, selectedProvider, setSelectedProvider, selectedWorkspace } =
-    useContext(ChatbotUIContext)
+  const {
+    profile,
+    selectedProvider,
+    setSelectedProvider,
+    selectedWorkspace,
+    applicationProviders
+  } = useContext(ChatbotUIContext)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -40,7 +45,7 @@ export const ApplicationSelect: FC<ApplicationSelectProps> = () => {
     await updateWorkspace(selectedWorkspace.id, {
       ...selectedWorkspace,
       application_provider: provider.id,
-      application: provider.applications[0].id
+      application: provider.applications[0].name
     })
 
     setIsOpen(false)
@@ -48,7 +53,7 @@ export const ApplicationSelect: FC<ApplicationSelectProps> = () => {
 
   const filterProviders = () => {
     const searchLower = search.toLocaleLowerCase()
-    return PROVIDERS.filter(provider =>
+    return applicationProviders.filter(provider =>
       provider.applications.some(application =>
         application.name.toLocaleLowerCase().includes(searchLower)
       )
@@ -64,7 +69,8 @@ export const ApplicationSelect: FC<ApplicationSelectProps> = () => {
       <div className="flex items-center">
         {selectedProvider?.name && selectedProvider?.applications[0] ? (
           <div className="ml-2 flex items-center">
-            {selectedProvider.name} : {selectedProvider.applications[0].name}
+            {formatToTitleCase(selectedProvider?.name)} :{" "}
+            {formatToTitleCase(selectedProvider.applications[0].name)}
           </div>
         ) : (
           <div className="flex items-center">Select an application</div>
@@ -146,14 +152,14 @@ const ProviderSection: FC<ProviderSectionProps> = ({
           <div key={app.id} className="flex items-center space-x-1">
             <ApplicationOption
               description={app.description || "This is an application."}
-              application={app.id}
+              application={formatToTitleCase(app.name)}
               onSelect={() =>
                 onSelect({
                   ...provider,
                   applications: [app]
                 })
               }
-              disabled={app.id === "sales-technique"}
+              disabled={app.name.toLocaleLowerCase() === "sales-technique"}
             />
           </div>
         ))}

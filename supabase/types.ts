@@ -34,6 +34,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      applications: {
+        Row: {
+          description: string | null
+          id: string
+          name: string
+          provider: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          name: string
+          provider: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          name?: string
+          provider?: string
+        }
+        Relationships: []
+      }
       assistant_collections: {
         Row: {
           assistant_id: string

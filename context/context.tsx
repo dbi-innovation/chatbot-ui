@@ -143,8 +143,10 @@ interface ChatbotUIContext {
   setToolInUse: Dispatch<SetStateAction<string>>
 
   // PROJECT STORE
-  selectedProvider: Provider
-  setSelectedProvider: Dispatch<SetStateAction<Provider>>
+  applicationProviders: Provider[] | []
+  setApplicationProviders: Dispatch<SetStateAction<Provider[] | []>>
+  selectedProvider: Provider | undefined
+  setSelectedProvider: Dispatch<SetStateAction<Provider | undefined>>
 }
 
 export const ChatbotUIContext = createContext<ChatbotUIContext>({
@@ -277,6 +279,8 @@ export const ChatbotUIContext = createContext<ChatbotUIContext>({
   setToolInUse: () => {},
 
   //PROJECT STORE
+  applicationProviders: [],
+  setApplicationProviders: () => {},
   selectedProvider: {} as Provider,
   setSelectedProvider: () => {}
 })

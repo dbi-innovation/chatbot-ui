@@ -5,6 +5,7 @@ import { FC, useContext, useRef, useCallback } from "react"
 import { Button } from "../ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 import { ApplicationSettingForm } from "../ui/application-setting-form"
+import { formatToTitleCase } from "@/lib/helper/formatt-message"
 
 interface ApplicationSettingsProps {}
 
@@ -20,8 +21,11 @@ export const ApplicationSettings: FC<ApplicationSettingsProps> = () => {
 
   if (!selectedProvider) return null
 
-  const applicationName = selectedProvider?.name || "Select Application"
-  const firstApplicationName = selectedProvider?.applications[0]?.name
+  const applicationName =
+    formatToTitleCase(selectedProvider?.name) || "Select Application"
+  const firstApplicationName = formatToTitleCase(
+    selectedProvider?.applications[0]?.name
+  )
   const displayName = `${applicationName}${selectedProvider?.name ? " : " : ""}${firstApplicationName}`
 
   return (

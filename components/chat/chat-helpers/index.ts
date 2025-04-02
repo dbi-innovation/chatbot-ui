@@ -220,7 +220,7 @@ export const handleHostedChat = async (
   payload: ChatPayload,
   profile: Tables<"profiles">,
   modelData: LLM,
-  applicationProvider: Provider,
+  selectedProvider: Provider,
   tempAssistantChatMessage: ChatMessage,
   isRegeneration: boolean,
   newAbortController: AbortController,
@@ -241,10 +241,10 @@ export const handleHostedChat = async (
   let draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
   const isGoogleProvider =
-    provider === "google" || applicationProvider.id === "vertex"
+    provider === "google" || selectedProvider.id === "vertex"
   const isCustomProvider = provider === "custom"
-  const isVertexApplicationProvider = applicationProvider.id === "vertex"
-  const isNullApplicationProvider = applicationProvider.id === null
+  const isVertexApplicationProvider = selectedProvider.id === "vertex"
+  const isNullApplicationProvider = selectedProvider.id === null
 
   const formattedMessages = isGoogleProvider
     ? await adaptMessagesForGoogleGemini(payload, draftMessages)
@@ -254,7 +254,7 @@ export const handleHostedChat = async (
     if (isNullApplicationProvider) {
       return isCustomProvider ? "/api/chat/custom" : `/api/chat/${provider}`
     }
-    return `/api/chat/${applicationProvider.id}`
+    return `/api/chat/${selectedProvider.id}`
   })()
 
   const requestBody = (() => {
@@ -266,8 +266,8 @@ export const handleHostedChat = async (
       }
     }
     return {
-      app_id: applicationProvider.applications[0].id,
-      app_provider: applicationProvider.id,
+      app_id: selectedProvider.applications[0].name,
+      app_provider: selectedProvider.id,
       chat_id: chatId,
       user_id: profile.user_id,
       email: email,

@@ -28,7 +28,7 @@ import { AssistantImage } from "@/types/images/assistant-image"
 import { VALID_ENV_KEYS } from "@/types/valid-keys"
 import { useRouter } from "next/navigation"
 import { FC, useEffect, useState } from "react"
-import { PROVIDERS } from "../applications/constants"
+import { getApplications } from "@/db/applications"
 
 interface GlobalStateProps {
   children: React.ReactNode
@@ -127,10 +127,37 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const [selectedTools, setSelectedTools] = useState<Tables<"tools">[]>([])
   const [toolInUse, setToolInUse] = useState<string>("none")
 
-  // PROJECT STORE
-  const [selectedProvider, setSelectedProvider] = useState<Provider>(
-    PROVIDERS[0]
+  // APPLICATIONS STORE
+  const [applicationProviders, setApplicationProviders] = useState<Provider[]>(
+    []
   )
+  const [selectedProvider, setSelectedProvider] = useState<
+    Provider | undefined
+  >()
+
+  const convertApplicationToProvider = (
+    apps: Tables<"applications">[]
+  ): Provider[] => {
+    if (!apps) return []
+
+    const providersMap = new Map()
+
+    apps.forEach(({ id, name, provider, description }) => {
+      if (!providersMap.has(provider)) {
+        providersMap.set(provider, {
+          id: provider,
+          name: provider,
+          applications: [],
+          description:
+            "A platform designed to provide personalized coaching experiences."
+        })
+      }
+
+      providersMap.get(provider).applications.push({ id, name, description })
+    })
+
+    return Array.from(providersMap.values())
+  }
 
   useEffect(() => {
     ;(async () => {
@@ -177,19 +204,22 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
       const workspaces = await getWorkspacesByUserId(user.id)
       setWorkspaces(workspaces)
 
+      const apps = await getApplications()
+      const providers = convertApplicationToProvider(apps)
+      setApplicationProviders(providers)
+
       const homeWorkspace = workspaces.find(w => w.is_home)
       const applications = [
         {
           id: homeWorkspace?.application || "",
-          name:
-            PROVIDERS.find(p => p.id === homeWorkspace?.application)?.name || ""
+          name: homeWorkspace?.application || ""
         }
       ]
 
       setSelectedProvider({
         id: homeWorkspace?.application_provider || "",
         name:
-          PROVIDERS.find(p => p.id === homeWorkspace?.application_provider)
+          providers.find(p => p.id === homeWorkspace?.application_provider)
             ?.name || "",
         applications: applications
       })
@@ -355,8 +385,10 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         setToolInUse,
 
         // PROJECT STORE
-        selectedProvider: selectedProvider,
-        setSelectedProvider: setSelectedProvider
+        applicationProviders,
+        setApplicationProviders,
+        selectedProvider,
+        setSelectedProvider
       }}
     >
       {children}
