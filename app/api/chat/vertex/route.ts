@@ -1,4 +1,4 @@
-import { getServerProfile } from "@/lib/server/server-chat-helpers"
+import { getServerUserProfile } from "@/lib/server/server-chat-helpers"
 import { validateEnv, initializeVertexAI } from "./config"
 import { RequestBody } from "./interface"
 import {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const { chatSettings, messages } = (await request.json()) as RequestBody
     if (!messages.length) throw new Error("No messages provided")
 
-    await getServerProfile()
+    const user = await getServerUserProfile()
 
     const vertexAI = initializeVertexAI()
     const models = initializeModels(vertexAI, chatSettings)
@@ -50,9 +50,8 @@ export async function POST(request: Request) {
       ragUse
     )
 
-    return createReadableResponse(responseStream, ragUse)
+    return createReadableResponse(responseStream, ragUse, user?.email)
   } catch (error: any) {
-    console.error(error)
     return createErrorResponse(error)
   }
 }
