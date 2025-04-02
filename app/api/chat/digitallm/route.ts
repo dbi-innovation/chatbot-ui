@@ -79,13 +79,13 @@ export async function POST(request: Request): Promise<Response> {
       headers: { "Content-Type": "text/plain" }
     })
   } catch (error: any) {
-    console.error("Error:", error)
+    console.error("Error calling DigitaLLM API:", error);
 
-    const errorMessage = error.message || "An unexpected error occurred"
-    const errorCode = error.status || 500
+    const errorMessage = error.message || "An unexpected error occurred";
+    const errorCode = error.status || 500;
 
     return new Response(JSON.stringify({ message: errorMessage }), {
       status: errorCode
-    })
+    });
   }
 }
