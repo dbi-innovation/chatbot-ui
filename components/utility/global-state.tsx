@@ -28,7 +28,7 @@ import { AssistantImage } from "@/types/images/assistant-image"
 import { VALID_ENV_KEYS } from "@/types/valid-keys"
 import { useRouter } from "next/navigation"
 import { FC, useEffect, useState } from "react"
-import { getApplications } from "@/db/applications"
+import { getApplicationById, getApplications } from "@/db/applications"
 
 interface GlobalStateProps {
   children: React.ReactNode
@@ -209,18 +209,12 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
       setApplicationProviders(providers)
 
       const homeWorkspace = workspaces.find(w => w.is_home)
-      const applications = [
-        {
-          id: homeWorkspace?.application || "",
-          name: homeWorkspace?.application || ""
-        }
-      ]
+
+      const app = await getApplicationById(homeWorkspace?.application_id || "")
+      const applications = [{ id: app.id, name: app.name }]
 
       setSelectedProvider({
-        id: homeWorkspace?.application_provider || "",
-        name:
-          providers.find(p => p.id === homeWorkspace?.application_provider)
-            ?.name || "",
+        name: app.provider,
         applications: applications
       })
 

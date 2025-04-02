@@ -44,8 +44,7 @@ export const ApplicationSelect: FC<ApplicationSelectProps> = () => {
 
     await updateWorkspace(selectedWorkspace.id, {
       ...selectedWorkspace,
-      application_provider: provider.id,
-      application: provider.applications[0].name
+      application_id: provider.applications[0].id
     })
 
     setIsOpen(false)

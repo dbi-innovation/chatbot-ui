@@ -241,10 +241,10 @@ export const handleHostedChat = async (
   let draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
   const isGoogleProvider =
-    provider === "google" || selectedProvider.id === "vertex"
+    provider === "google" || selectedProvider.name === "vertex"
   const isCustomProvider = provider === "custom"
-  const isVertexApplicationProvider = selectedProvider.id === "vertex"
-  const isNullApplicationProvider = selectedProvider.id === null
+  const isVertexApplicationProvider = selectedProvider.name === "vertex"
+  const isNullApplicationProvider = selectedProvider.name === null
 
   const formattedMessages = isGoogleProvider
     ? await adaptMessagesForGoogleGemini(payload, draftMessages)
@@ -254,7 +254,7 @@ export const handleHostedChat = async (
     if (isNullApplicationProvider) {
       return isCustomProvider ? "/api/chat/custom" : `/api/chat/${provider}`
     }
-    return `/api/chat/${selectedProvider.id}`
+    return `/api/chat/${selectedProvider.name}`
   })()
 
   const requestBody = (() => {
@@ -267,7 +267,7 @@ export const handleHostedChat = async (
     }
     return {
       app_id: selectedProvider.applications[0].name,
-      app_provider: selectedProvider.id,
+      app_provider: selectedProvider.name,
       chat_id: chatId,
       user_id: profile.user_id,
       email: email,
