@@ -145,8 +145,8 @@ interface ChatbotUIContext {
   // PROJECT STORE
   applicationProviders: Provider[] | []
   setApplicationProviders: Dispatch<SetStateAction<Provider[] | []>>
-  selectedProvider: Provider | undefined
-  setSelectedProvider: Dispatch<SetStateAction<Provider | undefined>>
+  selectedProvider: Provider
+  setSelectedProvider: Dispatch<SetStateAction<Provider>>
 }
 
 export const ChatbotUIContext = createContext<ChatbotUIContext>({

@@ -5,9 +5,9 @@ interface Message {
 
 interface RequestBody {
   messages: Message[]
-  app_id: string
-  chat_id: string
-  user_id: string
+  app_name: string
+  conversation_id: string
+  social_id: string
   app_provider: string
   email: string
 }
@@ -22,13 +22,13 @@ const getBaseUrl = (): string => {
 
 const createRequestBody = (
   lastMessage: Message,
-  { app_id, chat_id, user_id, email }: RequestBody
+  { app_name, conversation_id, social_id, email }: RequestBody
 ): string => {
   return JSON.stringify({
     inputs: { email },
-    chat_id,
-    app_name: app_id,
-    user_id,
+    conversation_id,
+    app_name,
+    social_id,
     messages: [lastMessage]
   })
 }
@@ -59,7 +59,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const lastMessage = messages.pop()!
     const baseUrl = getBaseUrl()
-    const apiUrl = `${baseUrl}/chat`
+    const apiUrl = `${baseUrl}/conversation`
 
     const response = await fetch(apiUrl, {
       method: "POST",

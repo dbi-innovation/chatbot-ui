@@ -5,7 +5,7 @@
 import { ChatbotUIContext } from "@/context/context"
 import { getProfileByUserId } from "@/db/profile"
 import { getWorkspaceImageFromStorage } from "@/db/storage/workspace-images"
-import { getWorkspacesByUserId } from "@/db/workspaces"
+import { getWorkspacesByUserId, updateWorkspace } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import {
   fetchHostedModels,
@@ -29,6 +29,7 @@ import { VALID_ENV_KEYS } from "@/types/valid-keys"
 import { useRouter } from "next/navigation"
 import { FC, useEffect, useState } from "react"
 import { getApplicationById, getApplications } from "@/db/applications"
+import { t } from "i18next"
 
 interface GlobalStateProps {
   children: React.ReactNode
@@ -131,9 +132,9 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const [applicationProviders, setApplicationProviders] = useState<Provider[]>(
     []
   )
-  const [selectedProvider, setSelectedProvider] = useState<
-    Provider | undefined
-  >()
+  const [selectedProvider, setSelectedProvider] = useState<Provider>(
+    applicationProviders[0]
+  )
 
   const convertApplicationToProvider = (
     apps: Tables<"applications">[]
@@ -199,13 +200,31 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
       }
 
       const workspaces = await getWorkspacesByUserId(user.id)
-      setWorkspaces(workspaces)
-
       const apps = await getApplications()
       const providers = convertApplicationToProvider(apps)
       setApplicationProviders(providers)
 
       const homeWorkspace = workspaces.find(w => w.is_home)
+      const vertexProvider = providers.find(
+        p =>
+          p.name === "vertex" &&
+          p.applications.some(a => a.name === "virtual-coach")
+      )
+
+      if (!homeWorkspace?.id) {
+        throw new Error("No home workspace found")
+      }
+
+      if (
+        !homeWorkspace?.application_id &&
+        homeWorkspace?.embeddings_provider === "vertex"
+      ) {
+        updateWorkspace(homeWorkspace?.id, {
+          ...homeWorkspace,
+          application_id: vertexProvider?.applications[0].id
+        })
+      }
+      setWorkspaces(workspaces)
 
       try {
         const app = await getApplicationById(
@@ -218,12 +237,6 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
           applications: applications
         })
       } catch (error) {
-        const vertexProvider = providers.find(
-          p =>
-            p.name === "vertex" &&
-            p.applications.some(a => a.name === "virtual-coach")
-        )
-
         if (!vertexProvider) return
 
         setSelectedProvider({

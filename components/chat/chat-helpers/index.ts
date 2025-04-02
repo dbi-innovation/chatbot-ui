@@ -230,7 +230,7 @@ export const handleHostedChat = async (
   setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
   setToolInUse: React.Dispatch<React.SetStateAction<string>>,
-  chatId: string,
+  conversationId: string,
   email?: string
 ) => {
   const provider =
@@ -266,10 +266,10 @@ export const handleHostedChat = async (
       }
     }
     return {
-      app_id: selectedProvider.applications[0].name,
+      app_name: selectedProvider.applications[0].name,
       app_provider: selectedProvider.name,
-      chat_id: chatId,
-      user_id: profile.user_id,
+      conversation_id: conversationId,
+      social_id: profile.user_id,
       email: email,
       messages: formattedMessages
     }
