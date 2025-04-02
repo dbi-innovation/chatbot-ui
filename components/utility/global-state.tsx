@@ -145,11 +145,8 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
     apps.forEach(({ id, name, provider, description }) => {
       if (!providersMap.has(provider)) {
         providersMap.set(provider, {
-          id: provider,
           name: provider,
-          applications: [],
-          description:
-            "A platform designed to provide personalized coaching experiences."
+          applications: []
         })
       }
 
@@ -210,13 +207,30 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
 
       const homeWorkspace = workspaces.find(w => w.is_home)
 
-      const app = await getApplicationById(homeWorkspace?.application_id || "")
-      const applications = [{ id: app.id, name: app.name }]
+      try {
+        const app = await getApplicationById(
+          homeWorkspace?.application_id || ""
+        )
+        const applications = [{ id: app.id, name: app.name }]
 
-      setSelectedProvider({
-        name: app.provider,
-        applications: applications
-      })
+        setSelectedProvider({
+          name: app.provider,
+          applications: applications
+        })
+      } catch (error) {
+        const vertexProvider = providers.find(
+          p =>
+            p.name === "vertex" &&
+            p.applications.some(a => a.name === "virtual-coach")
+        )
+
+        if (!vertexProvider) return
+
+        setSelectedProvider({
+          name: vertexProvider?.name || "",
+          applications: vertexProvider.applications
+        })
+      }
 
       for (const workspace of workspaces) {
         let workspaceImageUrl = ""
