@@ -28,6 +28,12 @@ module.exports = withBundleAnalyzer(
     experimental: {
       serverComponentsExternalPackages: ["sharp", "onnxruntime-node"]
     },
-    output: "standalone"
+    output: "standalone",
+    webpack: (config, { isServer, webpack }) => {
+      if (isServer) {
+        config.externals.push({ "nodejs-polars": "commonjs nodejs-polars" })
+      }
+      return config
+    }
   })
 )

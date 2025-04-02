@@ -43,6 +43,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/instructions ./instructions
+COPY --from=builder --chown=nextjs:nodejs /app/ranks ./ranks
 
 USER nextjs
 
