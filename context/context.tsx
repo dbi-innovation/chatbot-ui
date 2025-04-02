@@ -6,6 +6,7 @@ import {
   LLM,
   MessageImage,
   OpenRouterLLM,
+  Provider,
   WorkspaceImage
 } from "@/types"
 import { AssistantImage } from "@/types/images/assistant-image"
@@ -16,6 +17,8 @@ interface ChatbotUIContext {
   // PROFILE STORE
   profile: Tables<"profiles"> | null
   setProfile: Dispatch<SetStateAction<Tables<"profiles"> | null>>
+  email: string | undefined
+  setEmail: Dispatch<SetStateAction<string | undefined>>
 
   // ITEMS STORE
   assistants: Tables<"assistants">[]
@@ -138,12 +141,18 @@ interface ChatbotUIContext {
   setSelectedTools: Dispatch<SetStateAction<Tables<"tools">[]>>
   toolInUse: string
   setToolInUse: Dispatch<SetStateAction<string>>
+
+  // PROJECT STORE
+  selectedProvider: Provider
+  setSelectedProvider: Dispatch<SetStateAction<Provider>>
 }
 
 export const ChatbotUIContext = createContext<ChatbotUIContext>({
   // PROFILE STORE
   profile: null,
   setProfile: () => {},
+  email: undefined,
+  setEmail: () => {},
 
   // ITEMS STORE
   assistants: [],
@@ -265,5 +274,9 @@ export const ChatbotUIContext = createContext<ChatbotUIContext>({
   selectedTools: [],
   setSelectedTools: () => {},
   toolInUse: "none",
-  setToolInUse: () => {}
+  setToolInUse: () => {},
+
+  //PROJECT STORE
+  selectedProvider: {} as Provider,
+  setSelectedProvider: () => {}
 })

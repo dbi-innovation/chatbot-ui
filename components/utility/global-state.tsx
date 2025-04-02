@@ -21,12 +21,14 @@ import {
   LLM,
   MessageImage,
   OpenRouterLLM,
+  Provider,
   WorkspaceImage
 } from "@/types"
 import { AssistantImage } from "@/types/images/assistant-image"
 import { VALID_ENV_KEYS } from "@/types/valid-keys"
 import { useRouter } from "next/navigation"
 import { FC, useEffect, useState } from "react"
+import { PROVIDERS } from "../applications/constants"
 
 interface GlobalStateProps {
   children: React.ReactNode
@@ -37,6 +39,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
 
   // PROFILE STORE
   const [profile, setProfile] = useState<Tables<"profiles"> | null>(null)
+  const [email, setEmail] = useState<string | undefined>(undefined)
 
   // ITEMS STORE
   const [assistants, setAssistants] = useState<Tables<"assistants">[]>([])
@@ -124,6 +127,11 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const [selectedTools, setSelectedTools] = useState<Tables<"tools">[]>([])
   const [toolInUse, setToolInUse] = useState<string>("none")
 
+  // PROJECT STORE
+  const [selectedProvider, setSelectedProvider] = useState<Provider>(
+    PROVIDERS[0]
+  )
+
   useEffect(() => {
     ;(async () => {
       const profile = await fetchStartingData()
@@ -169,6 +177,23 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
       const workspaces = await getWorkspacesByUserId(user.id)
       setWorkspaces(workspaces)
 
+      const homeWorkspace = workspaces.find(w => w.is_home)
+      const applications = [
+        {
+          id: homeWorkspace?.application || "",
+          name:
+            PROVIDERS.find(p => p.id === homeWorkspace?.application)?.name || ""
+        }
+      ]
+
+      setSelectedProvider({
+        id: homeWorkspace?.application_provider || "",
+        name:
+          PROVIDERS.find(p => p.id === homeWorkspace?.application_provider)
+            ?.name || "",
+        applications: applications
+      })
+
       for (const workspace of workspaces) {
         let workspaceImageUrl = ""
 
@@ -204,6 +229,8 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         // PROFILE STORE
         profile,
         setProfile,
+        email,
+        setEmail,
 
         // ITEMS STORE
         assistants,
@@ -325,7 +352,11 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         selectedTools,
         setSelectedTools,
         toolInUse,
-        setToolInUse
+        setToolInUse,
+
+        // PROJECT STORE
+        selectedProvider: selectedProvider,
+        setSelectedProvider: setSelectedProvider
       }}
     >
       {children}
