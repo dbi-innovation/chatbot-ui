@@ -1237,6 +1237,8 @@ export type Database = {
       }
       workspaces: {
         Row: {
+          application: string | null
+          application_provider: string | null
           created_at: string
           default_context_length: number
           default_model: string
@@ -1256,6 +1258,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          application?: string | null
+          application_provider?: string | null
           created_at?: string
           default_context_length: number
           default_model: string
@@ -1275,6 +1279,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          application?: string | null
+          application_provider?: string | null
           created_at?: string
           default_context_length?: number
           default_model?: string
