@@ -1258,8 +1258,7 @@ export type Database = {
       }
       workspaces: {
         Row: {
-          application: string | null
-          application_provider: string | null
+          application_id: string | null
           created_at: string
           default_context_length: number
           default_model: string
@@ -1279,8 +1278,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          application?: string | null
-          application_provider?: string | null
+          application_id?: string | null
           created_at?: string
           default_context_length: number
           default_model: string
@@ -1300,8 +1298,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          application?: string | null
-          application_provider?: string | null
+          application_id?: string | null
           created_at?: string
           default_context_length?: number
           default_model?: string
@@ -1320,7 +1317,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_workspaces_applications"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
