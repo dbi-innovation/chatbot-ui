@@ -24,6 +24,7 @@ import { WithTooltip } from "../ui/with-tooltip"
 import { MessageActions } from "./message-actions"
 import { MessageMarkdown } from "./message-markdown"
 import { MessageFeedbackActions } from "./message-feedback"
+import { formatToTitleCase } from "@/lib/helper/formatt-message"
 
 const ICON_SIZE = 32
 
@@ -61,7 +62,8 @@ export const Message: FC<MessageProps> = ({
     toolInUse,
     files,
     models,
-    chatSettings
+    chatSettings,
+    selectedProvider
   } = useContext(ChatbotUIContext)
 
   const { handleSendMessage } = useChatHandler()
@@ -260,15 +262,14 @@ export const Message: FC<MessageProps> = ({
               )}
 
               <div className="font-semibold">
-                {message.role === "assistant"
-                  ? message.assistant_id
-                    ? assistants.find(
-                        assistant => assistant.id === message.assistant_id
-                      )?.name
-                    : selectedAssistant
-                      ? selectedAssistant?.name
-                      : MODEL_DATA?.modelName
-                  : profile?.display_name ?? profile?.username}
+                {message.role === "assistant" && (
+                  <>
+                    {formatToTitleCase(selectedProvider?.name)} :{" "}
+                    {formatToTitleCase(selectedProvider.applications[0].name)}
+                  </>
+                )}
+                {message.role === "user" &&
+                  (profile?.display_name ?? profile?.username)}
               </div>
             </div>
           )}
