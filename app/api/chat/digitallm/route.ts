@@ -59,7 +59,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const lastMessage = messages.pop()!
     const baseUrl = getBaseUrl()
-    const apiUrl = `${baseUrl}/conversation`
+    const apiUrl = `${baseUrl}/conversations`
 
     const response = await fetch(apiUrl, {
       method: "POST",
