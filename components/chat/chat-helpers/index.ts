@@ -12,6 +12,7 @@ import {
 import { consumeReadableStream } from "@/lib/consume-stream"
 import { Tables, TablesInsert } from "@/supabase/types"
 import {
+  Provider,
   ChatFile,
   ChatMessage,
   ChatPayload,
@@ -219,6 +220,7 @@ export const handleHostedChat = async (
   payload: ChatPayload,
   profile: Tables<"profiles">,
   modelData: LLM,
+  selectedProvider: Provider,
   tempAssistantChatMessage: ChatMessage,
   isRegeneration: boolean,
   newAbortController: AbortController,
@@ -227,7 +229,9 @@ export const handleHostedChat = async (
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
   setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setToolInUse: React.Dispatch<React.SetStateAction<string>>
+  setToolInUse: React.Dispatch<React.SetStateAction<string>>,
+  conversationId: string,
+  email?: string
 ) => {
   const provider =
     modelData.provider === "openai" && profile.use_azure_openai
@@ -236,24 +240,40 @@ export const handleHostedChat = async (
 
   let draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
-  let formattedMessages: any[] = []
-  if (provider === "google" || provider === "vertex") {
-    formattedMessages = await adaptMessagesForGoogleGemini(
-      payload,
-      draftMessages
-    )
-  } else {
-    formattedMessages = draftMessages
-  }
+  const isGoogleProvider =
+    provider === "google" || selectedProvider.name === "vertex"
+  const isCustomProvider = provider === "custom"
+  const isVertexApplicationProvider = selectedProvider.name === "vertex"
+  const isNullApplicationProvider = selectedProvider.name === null
 
-  const apiEndpoint =
-    provider === "custom" ? "/api/chat/custom" : `/api/chat/${provider}`
+  const formattedMessages = isGoogleProvider
+    ? await adaptMessagesForGoogleGemini(payload, draftMessages)
+    : draftMessages
 
-  const requestBody = {
-    chatSettings: payload.chatSettings,
-    messages: formattedMessages,
-    customModelId: provider === "custom" ? modelData.hostedId : ""
-  }
+  const apiEndpoint = (() => {
+    if (isNullApplicationProvider) {
+      return isCustomProvider ? "/api/chat/custom" : `/api/chat/${provider}`
+    }
+    return `/api/chat/${selectedProvider.name}`
+  })()
+
+  const requestBody = (() => {
+    if (isNullApplicationProvider || isVertexApplicationProvider) {
+      return {
+        chatSettings: payload.chatSettings,
+        messages: formattedMessages,
+        customModelId: isCustomProvider ? modelData.hostedId : ""
+      }
+    }
+    return {
+      app_name: selectedProvider.applications[0].name,
+      app_provider: selectedProvider.name,
+      conversation_id: conversationId,
+      social_id: profile.user_id,
+      email: email,
+      messages: formattedMessages
+    }
+  })()
 
   const response = await fetchChatResponse(
     apiEndpoint,

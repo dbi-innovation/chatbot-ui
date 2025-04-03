@@ -43,7 +43,6 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setPrompts,
     setTools,
     setModels,
-    selectedWorkspace,
     setSelectedWorkspace,
     setSelectedChat,
     setChatMessages,
@@ -54,7 +53,8 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     setChatImages,
     setNewMessageFiles,
     setNewMessageImages,
-    setShowFilesDisplay
+    setShowFilesDisplay,
+    setEmail
   } = useContext(ChatbotUIContext)
 
   const [loading, setLoading] = useState(true)
@@ -66,6 +66,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       if (!session) {
         return router.push("/login")
       } else {
+        setEmail(session.user.email)
         await fetchWorkspaceData(workspaceId)
       }
     })()

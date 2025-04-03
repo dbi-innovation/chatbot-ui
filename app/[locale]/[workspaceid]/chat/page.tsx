@@ -3,6 +3,7 @@
 import { useChatHandler } from "@/components/chat/chat-hooks/use-chat-handler"
 import { ChatInput } from "@/components/chat/chat-input"
 import { ChatUI } from "@/components/chat/chat-ui"
+import { ApplicationSettings } from "@/components/applications/app-settings"
 import { Brand } from "@/components/ui/brand"
 import { ChatbotUIContext } from "@/context/context"
 import useHotkey from "@/lib/hooks/use-hotkey"
@@ -27,6 +28,10 @@ export default function ChatPage() {
         <div className="relative flex h-full flex-col items-center justify-center">
           <div className="top-50% left-50% -translate-x-50% -translate-y-50% absolute mb-20">
             <Brand theme={theme === "dark" ? "dark" : "light"} />
+          </div>
+
+          <div className="absolute right-2 top-2">
+            <ApplicationSettings />
           </div>
 
           <div className="flex grow flex-col items-center justify-center" />

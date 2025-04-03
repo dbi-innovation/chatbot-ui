@@ -122,14 +122,6 @@ export const DeleteFolder: FC<DeleteFolderProps> = ({
           <Button
             ref={buttonRef}
             variant="destructive"
-            onClick={handleDeleteFolderAndItems}
-          >
-            Delete Folder & Included Items
-          </Button>
-
-          <Button
-            ref={buttonRef}
-            variant="destructive"
             onClick={handleDeleteFolderOnly}
           >
             Delete Folder Only

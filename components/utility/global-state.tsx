@@ -5,7 +5,7 @@
 import { ChatbotUIContext } from "@/context/context"
 import { getProfileByUserId } from "@/db/profile"
 import { getWorkspaceImageFromStorage } from "@/db/storage/workspace-images"
-import { getWorkspacesByUserId } from "@/db/workspaces"
+import { getWorkspacesByUserId, updateWorkspace } from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import {
   fetchHostedModels,
@@ -21,12 +21,15 @@ import {
   LLM,
   MessageImage,
   OpenRouterLLM,
+  Provider,
   WorkspaceImage
 } from "@/types"
 import { AssistantImage } from "@/types/images/assistant-image"
 import { VALID_ENV_KEYS } from "@/types/valid-keys"
 import { useRouter } from "next/navigation"
 import { FC, useEffect, useState } from "react"
+import { getApplicationById, getApplications } from "@/db/applications"
+import { t } from "i18next"
 
 interface GlobalStateProps {
   children: React.ReactNode
@@ -37,6 +40,7 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
 
   // PROFILE STORE
   const [profile, setProfile] = useState<Tables<"profiles"> | null>(null)
+  const [email, setEmail] = useState<string | undefined>(undefined)
 
   // ITEMS STORE
   const [assistants, setAssistants] = useState<Tables<"assistants">[]>([])
@@ -124,6 +128,35 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
   const [selectedTools, setSelectedTools] = useState<Tables<"tools">[]>([])
   const [toolInUse, setToolInUse] = useState<string>("none")
 
+  // APPLICATIONS STORE
+  const [applicationProviders, setApplicationProviders] = useState<Provider[]>(
+    []
+  )
+  const [selectedProvider, setSelectedProvider] = useState<Provider>(
+    applicationProviders[0]
+  )
+
+  const convertApplicationToProvider = (
+    apps: Tables<"applications">[]
+  ): Provider[] => {
+    if (!apps) return []
+
+    const providersMap = new Map()
+
+    apps.forEach(({ id, name, provider, description }) => {
+      if (!providersMap.has(provider)) {
+        providersMap.set(provider, {
+          name: provider,
+          applications: []
+        })
+      }
+
+      providersMap.get(provider).applications.push({ id, name, description })
+    })
+
+    return Array.from(providersMap.values())
+  }
+
   useEffect(() => {
     ;(async () => {
       const profile = await fetchStartingData()
@@ -167,7 +200,50 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
       }
 
       const workspaces = await getWorkspacesByUserId(user.id)
+      const apps = await getApplications()
+      const providers = convertApplicationToProvider(apps)
+      setApplicationProviders(providers)
+
+      const homeWorkspace = workspaces.find(w => w.is_home)
+      const vertexProvider = providers.find(
+        p =>
+          p.name === "vertex" &&
+          p.applications.some(a => a.name === "virtual-coach")
+      )
+
+      if (!homeWorkspace?.id) {
+        throw new Error("No home workspace found")
+      }
+
+      if (
+        !homeWorkspace?.application_id &&
+        homeWorkspace?.embeddings_provider === "vertex"
+      ) {
+        updateWorkspace(homeWorkspace?.id, {
+          ...homeWorkspace,
+          application_id: vertexProvider?.applications[0].id
+        })
+      }
       setWorkspaces(workspaces)
+
+      try {
+        const app = await getApplicationById(
+          homeWorkspace?.application_id || ""
+        )
+        const applications = [{ id: app.id, name: app.name }]
+
+        setSelectedProvider({
+          name: app.provider,
+          applications: applications
+        })
+      } catch (error) {
+        if (!vertexProvider) return
+
+        setSelectedProvider({
+          name: vertexProvider?.name || "",
+          applications: vertexProvider.applications
+        })
+      }
 
       for (const workspace of workspaces) {
         let workspaceImageUrl = ""
@@ -204,6 +280,8 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         // PROFILE STORE
         profile,
         setProfile,
+        email,
+        setEmail,
 
         // ITEMS STORE
         assistants,
@@ -325,7 +403,13 @@ export const GlobalState: FC<GlobalStateProps> = ({ children }) => {
         selectedTools,
         setSelectedTools,
         toolInUse,
-        setToolInUse
+        setToolInUse,
+
+        // PROJECT STORE
+        applicationProviders,
+        setApplicationProviders,
+        selectedProvider,
+        setSelectedProvider
       }}
     >
       {children}
