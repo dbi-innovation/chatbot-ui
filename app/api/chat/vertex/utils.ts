@@ -55,10 +55,8 @@ export const extractRagUse = (responseText: string): string => {
     switch (category?.toUpperCase()) {
       case "PRODUCT_DETAILS":
         return ENV_VARS.DS_PRODUCTS
-      case "RECOMMENDATION_AND_COMPARISON":
+      case "PRODUCTS_COMPARISON":
         return ENV_VARS.DS_COMPARE
-      case "PROCESS_AND_PROCEDURE":
-        return ENV_VARS.DS_PROCESS
       default:
         return ENV_VARS.DS_PRODUCTS
     }
@@ -88,8 +86,7 @@ export const getSystemInstruction = (type: string): string => {
 export const groundedDisplay = (ragUse: string): string => {
   const datastoreMap: Record<string, string> = {
     [ENV_VARS.DS_PRODUCTS]: "Product Details",
-    [ENV_VARS.DS_PROCESS]: "Process and Procedure",
-    [ENV_VARS.DS_COMPARE]: "Recommendation and Comparison"
+    [ENV_VARS.DS_COMPARE]: "Products Comparison"
   }
   return datastoreMap[ragUse] || "Unknown Category"
 }
