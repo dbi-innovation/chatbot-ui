@@ -158,7 +158,6 @@ const ProviderSection: FC<ProviderSectionProps> = ({
                   applications: [app]
                 })
               }
-              disabled={app.name.toLocaleLowerCase() === "sales-technique"}
             />
           </div>
         ))}
