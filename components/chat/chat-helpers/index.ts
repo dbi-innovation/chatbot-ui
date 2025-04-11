@@ -424,7 +424,7 @@ export const handleCreateChat = async (
     prompt: chatSettings.prompt,
     temperature: chatSettings.temperature,
     embeddings_provider: chatSettings.embeddingsProvider,
-    application_id: selectedWorkspace.application_id
+    application_id: selectedWorkspace?.application_id
   })
 
   setSelectedChat(createdChat)
