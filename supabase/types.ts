@@ -317,6 +317,7 @@ export type Database = {
       }
       chats: {
         Row: {
+          application_id: string | null
           assistant_id: string | null
           context_length: number
           created_at: string
@@ -335,6 +336,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          application_id?: string | null
           assistant_id?: string | null
           context_length: number
           created_at?: string
@@ -353,6 +355,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          application_id?: string | null
           assistant_id?: string | null
           context_length?: number
           created_at?: string
@@ -390,6 +393,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_workspaces_applications"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
             referencedColumns: ["id"]
           },
         ]
